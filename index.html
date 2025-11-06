@@ -1,502 +1,377 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Menu Order Collector</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="utf-8" />
+  <title>Team Food Order</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    .scroll-smooth { scroll-behavior: smooth; }
-    .chip { @apply inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium; }
-    .img-skeleton{ position:relative; overflow:hidden; }
-    .img-skeleton::after{ content:""; position:absolute; inset:0; background:linear-gradient(90deg,#eee,#f5f5f5,#eee); animation:shimmer 1.2s infinite; }
-    .img-loaded.img-skeleton::after{ display:none; }
-    @keyframes shimmer{ 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+    :root { --brand:#f97316; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f8fafc; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:var(--ink); background:var(--bg); }
+    header { position:sticky; top:0; z-index:10; background:#fff; border-bottom:1px solid var(--line); }
+    .wrap { max-width:1100px; margin:auto; padding:18px; }
+    h1 { font-size:clamp(20px, 3vw, 28px); margin:0; }
+    .muted { color:var(--muted); }
+    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:16px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
+    .thumb { width:100%; aspect-ratio:4/3; object-fit:cover; background:#fff; }
+    .card-body { padding:12px; display:flex; flex-direction:column; gap:8px; }
+    .title { font-weight:600; }
+    .price { color:#065f46; font-weight:600; font-size:14px; }
+    .qty { display:flex; align-items:center; gap:6px; margin-top:auto; }
+    .qty input { width:64px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; text-align:center; font-weight:600; }
+    .qty button { border:1px solid var(--line); background:#fff; border-radius:8px; width:32px; height:32px; font-weight:700; cursor:pointer; }
+    .panel { background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .row > * { margin: 4px 0; }
+    input[type="text"] { padding:10px 12px; border:1px solid var(--line); border-radius:10px; min-width:260px; }
+    .btn { appearance:none; border:none; border-radius:10px; padding:10px 14px; font-weight:600; cursor:pointer; }
+    .btn-primary { background:var(--brand); color:#fff; }
+    .btn-line { background:#fff; border:1px solid var(--line); }
+    .btn:disabled { opacity:.6; cursor:not-allowed; }
+    table { width:100%; border-collapse:collapse; }
+    th, td { border-top:1px solid var(--line); padding:8px 10px; text-align:left; font-size:14px; }
+    th { color:var(--muted); font-weight:600; }
+    .pill { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--line); border-radius:999px; font-size:12px; }
+    .footer { color:var(--muted); font-size:12px; margin-top:8px; }
+    .hint { font-size:12px; color:var(--muted); }
+    .totals { font-weight:700; }
+    .empty { padding:6px 8px; color:var(--muted); }
   </style>
-  <meta name="color-scheme" content="light dark" />
 </head>
-<body class="bg-gray-50 text-gray-900 scroll-smooth">
-  <!-- HEADER -->
-  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-      <h1 class="text-lg md:text-xl font-semibold">🍽️ Menu Order Collector</h1>
-      <div class="flex items-center gap-2 text-xs">
-        <button id="btnExportOrders" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">Download Orders (CSV)</button>
-        <button id="btnExportTotals" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">Download Item Totals (CSV)</button>
-        <button id="btnResetAll" class="text-red-600 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">Reset All</button>
-      </div>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>🍽️ Team Food Order</h1>
+      <div class="muted">Loads items from <code>assets/menu.csv</code></div>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-6 space-y-8">
-    <!-- SOURCE REFERENCE -->
-    <div class="text-xs text-gray-600">
-      <span class="font-medium">Menu data:</span> auto-loaded from <code>/assets/menu.csv</code>. You can still upload another CSV to override during this session.
+  <main class="wrap" id="app">
+    <!-- Controls -->
+    <div class="panel" style="margin-bottom:16px">
+      <div class="row">
+        <label for="person"><strong>Your name</strong></label>
+        <input id="person" type="text" placeholder="e.g., Alice Nguyen" />
+        <button id="submitOrder" class="btn btn-primary">Save this selection</button>
+        <span class="hint">Each person: enter name → set quantities → Save.</span>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <span class="pill" id="liveCount">👥 0 people saved</span>
+        <span class="pill" id="liveItems">🧾 0 total items</span>
+        <button id="dlDetailed" class="btn btn-line">Download detailed CSV (by person)</button>
+        <button id="dlSummary" class="btn btn-line">Download summary CSV (item totals)</button>
+        <button id="resetAll" class="btn btn-line" title="Clear everything (this page only)">Reset</button>
+      </div>
     </div>
 
-    <!-- ADMIN: MENU DATA CONTROLS -->
-    <section class="bg-white border rounded-2xl p-4 md:p-5">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <h2 class="text-lg font-semibold">1) Load/Manage Menu Items</h2>
-        <div class="flex gap-2 text-xs">
-          <button id="btnAddSample" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">Load Sample Items</button>
-          <label class="border rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
-            <input id="csvFile" type="file" accept=".csv" class="hidden" />
-            Upload CSV
-          </label>
-          <button id="btnDownloadTemplate" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">CSV Template</button>
-        </div>
-      </div>
-      <p class="text-sm text-gray-600 mt-1">Accepted CSV headers: <code class="bg-gray-100 px-1 rounded">category</code>, <code class="bg-gray-100 px-1 rounded">item</code>, <code class="bg-gray-100 px-1 rounded">price</code> (optional), <code class="bg-gray-100 px-1 rounded">image</code> (optional URL or relative path), <code class="bg-gray-100 px-1 rounded">description</code> (optional).</p>
+    <!-- Menu grid -->
+    <div id="menuGrid" class="grid" aria-live="polite"></div>
 
-      <div id="categoryChips" class="mt-4 flex flex-wrap gap-2"></div>
-      <div class="mt-3 flex items-center gap-3">
-        <input id="searchInput" type="text" placeholder="Search items…" class="border rounded-lg px-3 py-2 w-full md:w-80" />
-        <button id="clearSearch" class="text-xs border rounded-lg px-2.5 py-2">Clear</button>
-      </div>
+    <!-- Live submissions -->
+    <div class="panel" style="margin-top:16px">
+      <h3 style="margin:0 0 8px 0">Recent submissions</h3>
+      <div id="submissions"></div>
+    </div>
 
-      <div id="menuGrid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 mt-5"></div>
-    </section>
+    <!-- Item totals -->
+    <div class="panel" style="margin-top:16px">
+      <h3 style="margin:0 0 8px 0">Live item totals</h3>
+      <div id="itemTotals"></div>
+      <div class="footer">Totals update every time someone saves their selection.</div>
+    </div>
 
-    <!-- ORDER ENTRY -->
-    <section class="bg-white border rounded-2xl p-4 md:p-5">
-      <h2 class="text-lg font-semibold">2) Place Your Order</h2>
-      <div class="grid md:grid-cols-2 gap-4 mt-2">
-        <div>
-          <label class="text-sm">Your name</label>
-          <input id="customerName" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="e.g., Alice Nguyen" />
-        </div>
-        <div>
-          <label class="text-sm">Notes (optional)</label>
-          <input id="orderNote" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="No spicy, less sugar, etc." />
-        </div>
-      </div>
-
-      <div class="mt-4">
-        <h3 class="font-medium mb-2">Your cart</h3>
-        <div id="cartList" class="space-y-2"></div>
-        <div class="flex items-center justify-between mt-3">
-          <span class="text-sm text-gray-600">Tip: Add from the menu above. Adjust quantity here.</span>
-          <button id="btnSubmitOrder" class="bg-emerald-600 text-white rounded-lg px-4 py-2 hover:bg-emerald-700">Submit Order</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- LIVE ORDERS & SUMMARY -->
-    <section class="bg-white border rounded-2xl p-4 md:p-5">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <h2 class="text-lg font-semibold">3) Orders & Summary</h2>
-        <div class="text-xs flex gap-2">
-          <button id="btnExportOrders2" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">Download Orders (CSV)</button>
-          <button id="btnExportTotals2" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">Download Item Totals (CSV)</button>
-        </div>
-      </div>
-
-      <details class="mt-3 group" open>
-        <summary class="cursor-pointer select-none flex items-center justify-between bg-gray-50 border rounded-lg px-3 py-2">
-          <span class="font-medium">All Orders (by person)</span>
-          <svg class="w-4 h-4 text-gray-500 group-open:rotate-90 transition-transform" viewBox="0 0 20 20"><path fill="currentColor" d="M7 5l5 5-5 5z"/></svg>
-        </summary>
-        <div id="ordersTable" class="mt-3 overflow-x-auto"></div>
-      </details>
-
-      <details class="mt-3 group" open>
-        <summary class="cursor-pointer select-none flex items-center justify-between bg-gray-50 border rounded-lg px-3 py-2">
-          <span class="font-medium">Item Totals</span>
-          <svg class="w-4 h-4 text-gray-500 group-open:rotate-90 transition-transform" viewBox="0 0 20 20"><path fill="currentColor" d="M7 5l5 5-5 5z"/></svg>
-        </summary>
-        <div id="totalsTable" class="mt-3 overflow-x-auto"></div>
-      </details>
-    </section>
+    <div class="footer">
+      Note: CSV files download to the user’s computer (browsers can’t write into your <code>assets/</code> folder).
+    </div>
   </main>
 
-  <!-- Card Template with Image -->
-  <template id="menuCardTpl">
-    <div class="border rounded-xl bg-white shadow-sm overflow-hidden">
-      <div class="aspect-[4/3] bg-gray-100 img-skeleton">
-        <img data-el="img" alt="" class="w-full h-full object-cover" loading="lazy" />
-      </div>
-      <div class="p-3">
-        <div class="text-xs text-gray-500" data-el="category"></div>
-        <div class="font-medium" data-el="item"></div>
-        <div class="text-xs text-gray-500" data-el="price"></div>
-        <div class="text-xs text-gray-600 mt-1 line-clamp-2" data-el="desc"></div>
-        <div class="flex items-center justify-between gap-2 mt-3">
-          <input type="number" min="1" value="1" class="w-16 border rounded-lg px-2 py-1 text-sm" data-el="qty">
-          <button class="border rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50" data-el="add">Add</button>
-        </div>
-      </div>
-    </div>
-  </template>
-
   <script>
-    // ===== State =====
-    const STORAGE_KEYS = {
-      MENU: 'menuItems.v2', // bump version because structure changed (image/description)
-      ORDERS: 'orders.v1'
-    };
-
-    /** @type {{category:string,item:string,price?:number,image?:string,description?:string}[]} */
-    let menuItems = JSON.parse(localStorage.getItem(STORAGE_KEYS.MENU) || '[]');
-    /** @type {{name:string,note?:string,items:{item:string,category:string,price?:number,qty:number}[],createdAt:string}[]} */
-    let orders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS) || '[]');
-
-    const els = {
-      menuGrid: document.getElementById('menuGrid'),
-      categoryChips: document.getElementById('categoryChips'),
-      searchInput: document.getElementById('searchInput'),
-      clearSearch: document.getElementById('clearSearch'),
-      csvFile: document.getElementById('csvFile'),
-      btnDownloadTemplate: document.getElementById('btnDownloadTemplate'),
-      btnAddSample: document.getElementById('btnAddSample'),
-      customerName: document.getElementById('customerName'),
-      orderNote: document.getElementById('orderNote'),
-      cartList: document.getElementById('cartList'),
-      btnSubmitOrder: document.getElementById('btnSubmitOrder'),
-      ordersTable: document.getElementById('ordersTable'),
-      totalsTable: document.getElementById('totalsTable'),
-      btnExportOrders: document.getElementById('btnExportOrders'),
-      btnExportTotals: document.getElementById('btnExportTotals'),
-      btnExportOrders2: document.getElementById('btnExportOrders2'),
-      btnExportTotals2: document.getElementById('btnExportTotals2'),
-      btnResetAll: document.getElementById('btnResetAll')
-    };
-
-    // ===== Helpers =====
-    const saveMenu = () => localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(menuItems));
-    const saveOrders = () => localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
-
-    function uniqueCategories() {
-      return Array.from(new Set(menuItems.map(m => m.category))).sort();
-    }
-    function priceLabel(p) { return (typeof p === 'number' && !isNaN(p)) ? `$${p.toFixed(2)}` : '' }
-    function toCSV(rows) {
-      return rows.map(r => r.map(v => {
-        const s = String(v ?? '');
-        if (/[",
-]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
-        return s;
-      }).join(',')).join('
-');
-    }
-    function download(filename, text) {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([text], {type: 'text/csv'}));
-      a.download = filename;
-      document.body.appendChild(a); a.click(); a.remove();
-    }
-    function clearChildren(node){ while(node.firstChild) node.removeChild(node.firstChild); }
-    function loadImage(imgEl, src){
-      if(!src){ imgEl.closest('.img-skeleton').classList.add('img-loaded'); return; }
-      imgEl.onload = () => imgEl.closest('.img-skeleton').classList.add('img-loaded');
-      imgEl.onerror = () => imgEl.closest('.img-skeleton').classList.add('img-loaded');
-      imgEl.src = src;
-      imgEl.alt = imgEl.alt || 'Menu image';
+    // ---------- Utility: lightweight CSV parser (handles quoted commas) ----------
+    function parseCSV(str) {
+      const rows = [];
+      let row = [], cell = '', inQuotes = false;
+      for (let i=0; i<str.length; i++) {
+        const c = str[i], n = str[i+1];
+        if (c === '"' ) {
+          if (inQuotes && n === '"') { cell += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+        } else if (c === ',' && !inQuotes) {
+          row.push(cell.trim()); cell = '';
+        } else if ((c === '\n' || c === '\r') && !inQuotes) {
+          if (cell.length || row.length) { row.push(cell.trim()); rows.push(row); row = []; cell=''; }
+        } else {
+          cell += c;
+        }
+      }
+      if (cell.length || row.length) { row.push(cell.trim()); rows.push(row); }
+      // header → objects
+      if (!rows.length) return [];
+      const header = rows[0].map(h => h.toLowerCase().trim());
+      const out = [];
+      for (let i=1; i<rows.length; i++) {
+        const r = rows[i]; if (r.length===1 && r[0]==='') continue;
+        const obj = {};
+        header.forEach((h, j) => obj[h] = (r[j] ?? '').trim());
+        out.push(obj);
+      }
+      return out;
     }
 
-    // ===== Rendering =====
-    let currentCategory = 'All';
-
-    function renderCategoryChips(){
-      clearChildren(els.categoryChips);
-      const cats = ['All', ...uniqueCategories()];
-      cats.forEach(cat => {
-        const btn = document.createElement('button');
-        btn.className = 'chip border-gray-300 bg-white hover:bg-gray-50';
-        btn.textContent = cat;
-        if (cat === currentCategory) btn.classList.add('!border-gray-800');
-        btn.addEventListener('click', () => { currentCategory = cat; renderMenu(); renderCategoryChips(); });
-        els.categoryChips.appendChild(btn);
-      });
+    // ---------- Paths & image helpers ----------
+    function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+    function imageFor(row){
+      // Preferred: explicit "image" column (filename or path)
+      let img = (row.image || row.photo || '').trim();
+      if (img) {
+        if (/^https?:\/\//i.test(img) || img.startsWith('assets/')) return img;
+        return 'assets/images/' + img;
+      }
+      // Fallback: assets/images/<slug>.jpg, else pizza.jpg
+      const guess = 'assets/images/' + slugify(row.name || row.item || '') + '.jpg';
+      return guess;
+    }
+    function priceOf(row){
+      const raw = row.price || row.cost || '';
+      if (!raw) return '';
+      const num = Number(String(raw).replace(/[^0-9.\-]/g,''));
+      if (Number.isFinite(num)) return num.toFixed(num % 1 ? 2 : 0);
+      return raw;
     }
 
-    function renderMenu(){
-      clearChildren(els.menuGrid);
-      const q = (els.searchInput.value || '').toLowerCase();
-      const filtered = menuItems.filter(m => {
-        const inCat = currentCategory === 'All' || m.category === currentCategory;
-        const inSearch = !q || m.item.toLowerCase().includes(q) || (m.category||'').toLowerCase().includes(q);
-        return inCat && inSearch;
-      });
-      if (!filtered.length){
-        const empty = document.createElement('div');
-        empty.className = 'text-sm text-gray-500';
-        empty.textContent = 'No items. Upload a CSV or load samples.';
-        els.menuGrid.appendChild(empty);
+    // ---------- State ----------
+    let MENU = []; // [{name, price, ...}]
+    const CART = new Map(); // key: itemName → qty (current user before Save)
+    const SUBMISSIONS = []; // [{person, items:[{item, qty, price}], at: Date}]
+
+    // ---------- DOM refs ----------
+    const menuGrid = document.getElementById('menuGrid');
+    const submissionsDiv = document.getElementById('submissions');
+    const itemTotalsDiv = document.getElementById('itemTotals');
+    const personInput = document.getElementById('person');
+    const liveCount = document.getElementById('liveCount');
+    const liveItems = document.getElementById('liveItems');
+    const btnSave = document.getElementById('submitOrder');
+    const btnDlDetailed = document.getElementById('dlDetailed');
+    const btnDlSummary = document.getElementById('dlSummary');
+    const btnReset = document.getElementById('resetAll');
+
+    // ---------- Renderers ----------
+    function renderMenu() {
+      if (!MENU.length) {
+        menuGrid.innerHTML = '<div class="empty">No items found. Check <code>assets/menu.csv</code>.</div>';
         return;
       }
-      const tpl = document.getElementById('menuCardTpl');
-      filtered.forEach(m => {
-        const node = tpl.content.cloneNode(true);
-        node.querySelector('[data-el="category"]').textContent = m.category || '';
-        node.querySelector('[data-el="item"]').textContent = m.item || '';
-        node.querySelector('[data-el="price"]').textContent = priceLabel(m.price);
-        node.querySelector('[data-el="desc"]').textContent = m.description || '';
-        loadImage(node.querySelector('[data-el="img"]'), m.image);
-        const qtyEl = node.querySelector('[data-el="qty"]');
-        node.querySelector('[data-el="add"]').addEventListener('click', () => addToCart(m, parseInt(qtyEl.value||'1',10)));
-        els.menuGrid.appendChild(node);
-      });
-    }
+      menuGrid.innerHTML = '';
+      for (const row of MENU) {
+        const name = row.name || row.item || '(Unnamed item)';
+        const price = priceOf(row);
+        const imgSrc = imageFor(row);
 
-    // Cart state is not persisted (per person before submit)
-    let cart = [];
-    function addToCart(m, qty){
-      if (!qty || qty < 1) qty = 1;
-      const found = cart.find(c => c.item === m.item && c.category === m.category);
-      if (found) found.qty += qty; else cart.push({item:m.item, category:m.category, price:m.price, qty});
-      renderCart();
-    }
-    function renderCart(){
-      clearChildren(els.cartList);
-      if (!cart.length){
-        const p = document.createElement('p'); p.className='text-sm text-gray-500'; p.textContent='Cart is empty.'; els.cartList.appendChild(p); return;
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        const img = document.createElement('img');
+        img.className = 'thumb';
+        img.src = imgSrc;
+        img.alt = name;
+        img.onerror = () => { img.onerror=null; img.src='assets/images/pizza.jpg'; };
+
+        const body = document.createElement('div');
+        body.className = 'card-body';
+
+        const t = document.createElement('div');
+        t.className = 'title';
+        t.textContent = name;
+
+        const p = document.createElement('div');
+        p.className = 'price';
+        p.textContent = price ? `$${price}` : '';
+
+        const qty = document.createElement('div');
+        qty.className = 'qty';
+
+        const minus = document.createElement('button'); minus.type='button'; minus.textContent='−';
+        const input = document.createElement('input'); input.type='number'; input.min='0'; input.step='1'; input.value = CART.get(name) || 0;
+        const plus = document.createElement('button'); plus.type='button'; plus.textContent='+';
+
+        const setQty = (val) => {
+          const n = Math.max(0, Math.floor(Number(val)||0));
+          input.value = n;
+          if (n>0) CART.set(name, n); else CART.delete(name);
+          updateLiveTotals();
+        };
+        minus.addEventListener('click', () => setQty(Number(input.value)-1));
+        plus.addEventListener('click', () => setQty(Number(input.value)+1));
+        input.addEventListener('input', () => setQty(input.value));
+
+        qty.append(minus, input, plus);
+        body.append(t, p, qty);
+        card.append(img, body);
+        menuGrid.append(card);
       }
-      cart.forEach((c, idx) => {
-        const row = document.createElement('div');
-        row.className = 'flex items-center justify-between border rounded-lg px-3 py-2';
-        row.innerHTML = `<div class="text-sm"><span class="font-medium">${c.item}</span> <span class="text-gray-500">(${c.category})</span> ${priceLabel(c.price)}</div>`;
-        const right = document.createElement('div'); right.className='flex items-center gap-2';
-        const qty = document.createElement('input'); qty.type='number'; qty.min=1; qty.value=c.qty; qty.className='w-16 border rounded-lg px-2 py-1 text-sm';
-        qty.addEventListener('change', ()=>{ c.qty = Math.max(1, parseInt(qty.value||'1',10)); });
-        const del = document.createElement('button'); del.className='text-red-600 border border-red-200 rounded-lg px-2.5 py-1 text-sm hover:bg-red-50'; del.textContent='Remove';
-        del.addEventListener('click', ()=>{ cart.splice(idx,1); renderCart(); });
-        right.append(qty, del); row.appendChild(right); els.cartList.appendChild(row);
-      });
     }
 
-    // Submit order
-    els.btnSubmitOrder.addEventListener('click', () => {
-      const name = (els.customerName.value || '').trim();
-      if (!name) { alert('Please enter your name.'); return; }
-      if (!cart.length){ alert('Your cart is empty.'); return; }
-      const note = (els.orderNote.value || '').trim();
-      orders.push({ name, note, items: JSON.parse(JSON.stringify(cart)), createdAt: new Date().toISOString() });
-      saveOrders();
-      cart = []; renderCart(); els.orderNote.value='';
-      renderOrders(); renderTotals();
-      alert('Order recorded!');
-    });
-
-    // Orders table
-    function renderOrders(){
-      clearChildren(els.ordersTable);
-      if (!orders.length){
-        const p = document.createElement('p'); p.className='text-sm text-gray-500'; p.textContent='No orders yet.'; els.ordersTable.appendChild(p); return;
+    function renderSubmissions() {
+      if (!SUBMISSIONS.length) {
+        submissionsDiv.innerHTML = '<div class="empty">No submissions yet.</div>';
+        return;
       }
-      const table = document.createElement('table'); table.className='min-w-full text-sm';
-      table.innerHTML = `<thead><tr class='text-left border-b'><th class='py-2 pr-3'>Name</th><th class='py-2 pr-3'>Items</th><th class='py-2 pr-3'>Note</th><th class='py-2'>Time</th></tr></thead><tbody></tbody>`;
-      const tb = table.querySelector('tbody');
-      orders.forEach(o => {
-        const tr = document.createElement('tr'); tr.className='border-b align-top';
-        const itemsStr = o.items.map(i => `${i.item} × ${i.qty}`).join('; ');
-        tr.innerHTML = `<td class='py-2 pr-3 font-medium'>${o.name}</td><td class='py-2 pr-3'>${itemsStr}</td><td class='py-2 pr-3 text-gray-600'>${o.note||''}</td><td class='py-2 text-gray-500'>${new Date(o.createdAt).toLocaleString()}</td>`;
-        tb.appendChild(tr);
-      });
-      els.ordersTable.appendChild(table);
-    }
-
-    // Totals table
-    function renderTotals(){
-      clearChildren(els.totalsTable);
-      if (!orders.length){
-        const p = document.createElement('p'); p.className='text-sm text-gray-500'; p.textContent='No data yet.'; els.totalsTable.appendChild(p); return;
+      let html = '<table><thead><tr><th>Person</th><th>Items</th><th>When</th></tr></thead><tbody>';
+      for (const s of SUBMISSIONS.slice().reverse()) {
+        const itemsTxt = s.items.map(x => `${x.item} ×${x.qty}`).join(', ');
+        html += `<tr><td>${escapeHtml(s.person)}</td><td>${escapeHtml(itemsTxt)}</td><td>${new Date(s.at).toLocaleString()}</td></tr>`;
       }
-      const totals = new Map(); // key: item|category
-      orders.forEach(o => o.items.forEach(i => {
-        const key = i.item + '|' + i.category;
-        totals.set(key, (totals.get(key)||0) + i.qty);
-      }));
-      const rows = Array.from(totals.entries()).map(([key, qty]) => {
-        const [item, category] = key.split('|');
-        return {item, category, qty};
-      }).sort((a,b)=> a.category.localeCompare(b.category) || a.item.localeCompare(b.item));
-
-      const table = document.createElement('table'); table.className='min-w-full text-sm';
-      table.innerHTML = `<thead><tr class='text-left border-b'><th class='py-2 pr-3'>Category</th><th class='py-2 pr-3'>Item</th><th class='py-2'>Total Qty</th></tr></thead><tbody></tbody>`;
-      const tb = table.querySelector('tbody');
-      rows.forEach(r => {
-        const tr = document.createElement('tr'); tr.className='border-b';
-        tr.innerHTML = `<td class='py-2 pr-3'>${r.category}</td><td class='py-2 pr-3'>${r.item}</td><td class='py-2 font-medium'>${r.qty}</td>`;
-        tb.appendChild(tr);
-      });
-      els.totalsTable.appendChild(table);
+      html += '</tbody></table>';
+      submissionsDiv.innerHTML = html;
     }
 
-    // Export CSV
-    function exportOrdersCSV(){
-      const header = ['name','note','item','category','price','qty','createdAt'];
-      const rows = [header];
-      orders.forEach(o => o.items.forEach(i => rows.push([
-        o.name, o.note||'', i.item, i.category, (i.price??''), i.qty, o.createdAt
-      ])));
-      download('orders_detail.csv', toCSV(rows));
-    }
-    function exportTotalsCSV(){
-      const counts = new Map();
-      orders.forEach(o=>o.items.forEach(i=>{
-        const key=i.item+'|'+i.category; counts.set(key,(counts.get(key)||0)+i.qty);
-      }));
-      const rows=[['category','item','total_qty']];
-      for (const [k,v] of counts.entries()){
-        const [item, category] = k.split('|');
-        rows.push([category, item, v]);
+    function renderItemTotals() {
+      const totals = computeItemTotals();
+      if (!Object.keys(totals).length) {
+        itemTotalsDiv.innerHTML = '<div class="empty">No items yet.</div>';
+        return;
       }
-      download('item_totals.csv', toCSV(rows));
+      let grand = 0;
+      let html = '<table><thead><tr><th>Item</th><th>Qty</th><th>Total $</th></tr></thead><tbody>';
+      for (const [item, info] of Object.entries(totals)) {
+        const sum = (info.totalPrice ?? 0);
+        grand += sum;
+        html += `<tr><td>${escapeHtml(item)}</td><td>${info.qty}</td><td>$${sum.toFixed(2)}</td></tr>`;
+      }
+      html += `<tr class="totals"><td>Total</td><td></td><td>$${grand.toFixed(2)}</td></tr>`;
+      html += '</tbody></table>';
+      itemTotalsDiv.innerHTML = html;
     }
 
-    [els.btnExportOrders, els.btnExportOrders2].forEach(b=>b.addEventListener('click', exportOrdersCSV));
-    [els.btnExportTotals, els.btnExportTotals2].forEach(b=>b.addEventListener('click', exportTotalsCSV));
+    function updateLiveTotals(){
+      const people = SUBMISSIONS.length;
+      const items = Object.values(computeItemTotals()).reduce((a,b)=>a+b.qty,0);
+      liveCount.textContent = `👥 ${people} ${people===1?'person':'people'} saved`;
+      liveItems.textContent = `🧾 ${items} total items`;
+    }
 
-    // CSV Template & Upload (with image + description)
-    els.btnDownloadTemplate.addEventListener('click', () => {
-      const tpl = toCSV([
-        ['category','item','price','image','description'],
-        ['Drink','Milk Tea',4.5,'assets/images/milk_tea.jpg','Classic black tea with milk'],
-        ['Drink','Lemon Tea',3.5,'assets/images/lemon_tea.jpg','Fresh lemon with black tea'],
-        ['Food','Fried Chicken',6.0,'assets/images/fried_chicken.jpg','Crispy chicken bites'],
-        ['Food','Fries',2.5,'assets/images/fries.jpg','Shoestring fries']
-      ]);
-      download('menu_template.csv', tpl);
-    });
-
-    // Parse CSV text into objects supporting extra columns
-    function parseCSV(text){
-      // Normalize newlines and strip BOM
-      text = (text || '').replace(/
-?/g, '
-').replace(/^﻿/, '');
-      const lines = text.split('
-').filter(l=>l.trim().length>0);
-      if(!lines.length) return [];
-
-      // Auto-detect delimiter: comma vs semicolon
-      const headProbe = lines[0];
-      const commaCnt = (headProbe.match(/,/g)||[]).length;
-      const semiCnt  = (headProbe.match(/;/g)||[]).length;
-      const DELIM = semiCnt>commaCnt ? ';' : ',';
-
-      // Safe split respecting quotes
-      const splitLine = (line) => {
-        const out=[]; let cur=''; let q=false;
-        for(let i=0;i<line.length;i++){
-          const ch=line[i];
-          if(ch==='"'){
-            if(q && line[i+1]==='"'){ cur+='"'; i++; }
-            else q=!q;
-          } else if(ch===DELIM && !q){ out.push(cur); cur=''; }
-          else { cur+=ch; }
+    // ---------- Data helpers ----------
+    function computeItemTotals(){
+      const map = {}; // name → {qty, price}
+      for (const s of SUBMISSIONS) {
+        for (const it of s.items) {
+          if (!map[it.item]) map[it.item] = { qty:0, price: it.price ?? null };
+          map[it.item].qty += it.qty;
+          if (it.price != null) map[it.item].price = it.price;
         }
-        out.push(cur);
-        return out.map(s=>s.trim());
-      };
-
-      const headers = splitLine(lines.shift()).map(h=>h.toLowerCase());
-      const idx = (name) => headers.indexOf(name);
-      const ci = idx('category');
-      const ii = idx('item');
-      const pi = idx('price');
-      const imgi = idx('image');
-      const di = idx('description');
-      if (ci<0 || ii<0){ alert('CSV must include category and item columns.'); return []; }
-
-      const rows = lines.map(line => {
-        const cols = splitLine(line);
-        const rec = {
-          category: (cols[ci]||'Uncategorized').trim(),
-          item: (cols[ii]||'Unnamed').trim(),
-          price: undefined,
-          image: imgi>=0 ? (cols[imgi]||'').replace(/^\//,'') : '', // strip leading slash to avoid domain root on GitHub Pages
-          description: di>=0 ? (cols[di]||'') : ''
-        };
-        if (pi>=0){ const p = parseFloat((cols[pi]||'').replace(',','.')); if (!isNaN(p)) rec.price = p; }
-        return rec;
-      }).filter(r => r.item);
-      return rows;
-    }
-      const rows = lines.map(line => {
-        const cols = line.match(/(?:\"([^\"]*)\")|([^,]+)/g)?.map(c => c.replace(/^\"|\"$/g,'').trim()) || [];
-        const rec = {
-          category: cols[ci] || 'Uncategorized',
-          item: cols[ii] || 'Unnamed',
-          price: undefined,
-          image: imgi>=0 ? cols[imgi] || '' : '',
-          description: di>=0 ? cols[di] || '' : ''
-        };
-        if (pi>=0){ const p = parseFloat(cols[pi]); if (!isNaN(p)) rec.price = p; }
-        return rec;
-      }).filter(r => r.item);
-      return rows;
-    }
-
-    // Upload CSV override
-    els.csvFile.addEventListener('change', async (e) => {
-      const file = e.target.files?.[0]; if (!file) return;
-      const text = await file.text();
-      const parsed = parseCSV(text);
-      if(!parsed.length) return;
-      menuItems = parsed; saveMenu();
-      currentCategory = 'All'; renderCategoryChips(); renderMenu();
-    });
-
-    // Sample Loader (with images)
-    els.btnAddSample.addEventListener('click', () => {
-      menuItems = [
-        {category:'Drink', item:'Classic Milk Tea', price:4.5, image:'assets/images/milk_tea.jpg', description:'Classic black tea with milk'},
-        {category:'Drink', item:'Oolong Lemon Tea', price:3.8, image:'assets/images/lemon_tea.jpg', description:'Oolong tea with lemon'},
-        {category:'Drink', item:'Black Coffee', price:2.5, image:'assets/images/coffee.jpg', description:'Hot brewed coffee'},
-        {category:'Snack', item:'French Fries', price:2.2, image:'assets/images/fries.jpg', description:'Crispy fries'},
-        {category:'Snack', item:'Fried Chicken Bites', price:3.9, image:'assets/images/fried_chicken.jpg', description:'Crispy chicken'},
-        {category:'Snack', item:'Cheese Sticks', price:3.1, image:'assets/images/cheese_sticks.jpg', description:'Mozzarella sticks'},
-        {category:'Food', item:'Chicken Rice', price:5.9, image:'assets/images/chicken_rice.jpg', description:'Steamed rice with chicken'},
-        {category:'Food', item:'Beef Noodles', price:6.5, image:'assets/images/beef_noodles.jpg', description:'Beef noodle soup'}
-      ];
-      saveMenu(); currentCategory='All'; renderCategoryChips(); renderMenu();
-    });
-
-    // Auto-load CSV from /assets/menu.csv on first load
-    async function autoloadCSV(){
-      try{
-        if (location.protocol === 'file:') throw new Error('file-protocol');
-        const repoBase = (location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]+$/, '/'));
-        const csvUrl = repoBase + 'assets/menu.csv?v=' + Date.now();
-        const res = await fetch(csvUrl, {cache:'no-cache'});
-        if(!res.ok) throw new Error('HTTP '+res.status);
-        const text = await res.text();
-        const parsed = parseCSV(text);
-        if(parsed.length){ menuItems = parsed; saveMenu(); }
-      }catch(err){
-        console.warn('Autoload CSV skipped:', err.message);
-        const note = document.createElement('div');
-        note.className = 'mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2';
-        note.innerHTML = 'Cannot auto-load <code>assets/menu.csv</code>. ' +
-                         (location.protocol==='file:' ? 
-                           'You opened this file directly (file://). Please use a local server or the Upload CSV button.' : 
-                           'Check GitHub Pages is enabled (Settings → Pages), the CSV path is <code>assets/menu.csv</code>, and image paths do not start with <code>/</code>.');
-        document.querySelector('section').prepend(note);
-      }finally{
-        renderCategoryChips(); renderMenu(); renderCart(); renderOrders(); renderTotals();
       }
-    });
-        if(!res.ok) throw new Error('No CSV found');
-        const text = await res.text();
-        const parsed = parseCSV(text);
-        if(parsed.length){ menuItems = parsed; saveMenu(); }
-      }catch(err){ /* silently ignore if not present when opening locally */ }
-      finally{ renderCategoryChips(); renderMenu(); renderCart(); renderOrders(); renderTotals(); }
+      // compute totals
+      for (const [k,v] of Object.entries(map)) {
+        const price = Number(v.price ?? 0);
+        v.totalPrice = price ? (v.qty * price) : 0;
+      }
+      return map;
     }
 
-    // Reset
-    els.btnResetAll.addEventListener('click', () => {
-      if (!confirm('Clear ALL menu and orders?')) return;
-      localStorage.removeItem(STORAGE_KEYS.MENU);
-      localStorage.removeItem(STORAGE_KEYS.ORDERS);
-      menuItems=[]; orders=[]; cart=[];
-      renderCategoryChips(); renderMenu(); renderCart(); renderOrders(); renderTotals();
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+
+    function toCSV(rows){
+      const quote = v => {
+        const s = String(v ?? '');
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+      };
+      return rows.map(r => r.map(quote).join(',')).join('\n');
+    }
+
+    function downloadCSV(filename, rows){
+      const csv = toCSV(rows);
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // ---------- Events ----------
+    btnSave.addEventListener('click', () => {
+      const person = personInput.value.trim();
+      if (!person) { alert('Please enter your name.'); return; }
+      if (CART.size === 0) { alert('Please choose at least one item (qty > 0).'); return; }
+      // build items list from CART based on MENU pricing
+      const priceMap = new Map(MENU.map(r => [ (r.name||r.item||'').trim(), Number(priceOf(r) || 0) ]));
+      const items = [];
+      CART.forEach((qty, itemName) => {
+        if (qty>0) items.push({ item:itemName, qty, price: priceMap.get(itemName) || null });
+      });
+      SUBMISSIONS.push({ person, items, at: new Date().toISOString() });
+      // clear cart for next person
+      CART.clear();
+      personInput.value = '';
+      renderMenu();
+      renderSubmissions();
+      renderItemTotals();
+      updateLiveTotals();
     });
 
-    // Initial render (will autoload CSV)
-    autoloadCSV();
+    btnDlDetailed.addEventListener('click', () => {
+      if (!SUBMISSIONS.length) { alert('No submissions to export.'); return; }
+      const rows = [['person','item','qty','price','timestamp']];
+      for (const s of SUBMISSIONS) {
+        for (const it of s.items) {
+          rows.push([s.person, it.item, it.qty, it.price ?? '', s.at]);
+        }
+      }
+      downloadCSV(`orders_detailed_${dateStamp()}.csv`, rows);
+    });
+
+    btnDlSummary.addEventListener('click', () => {
+      const totals = computeItemTotals();
+      const names = Object.keys(totals);
+      if (!names.length){ alert('No items to summarize.'); return; }
+      const rows = [['item','total_qty','unit_price','total_amount']];
+      for (const name of names) {
+        const t = totals[name];
+        rows.push([name, t.qty, (t.price ?? ''), (t.totalPrice ?? 0).toFixed(2)]);
+      }
+      downloadCSV(`orders_summary_${dateStamp()}.csv`, rows);
+    });
+
+    btnReset.addEventListener('click', () => {
+      if (!confirm('Clear all in-page data (cart + submissions)?')) return;
+      CART.clear(); SUBMISSIONS.length = 0; personInput.value = '';
+      renderMenu(); renderSubmissions(); renderItemTotals(); updateLiveTotals();
+    });
+
+    function dateStamp(){
+      const d = new Date();
+      const pad = n => String(n).padStart(2,'0');
+      return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
+    }
+
+    // ---------- Boot ----------
+    (async function init(){
+      try {
+        const res = await fetch('assets/menu.csv', { cache: 'no-store' });
+        if (!res.ok) throw new Error('Failed to load assets/menu.csv');
+        const text = await res.text();
+        const rows = parseCSV(text);
+
+        // Normalize expected columns
+        // Expect at least: name (or item). Optional: price, category, image.
+        // Example header: name,price,image
+        MENU = rows.map(r => {
+          const obj = Object.assign({}, r);
+          // Normalize key casing fallback already handled by parser; just ensure "name"
+          obj.name = r.name || r.item || '';
+          return obj;
+        }).filter(r => r.name);
+
+        renderMenu();
+        renderSubmissions();
+        renderItemTotals();
+        updateLiveTotals();
+      } catch (e) {
+        console.error(e);
+        menuGrid.innerHTML = '<div class="panel">Could not load <code>assets/menu.csv</code>. Check the file path and that you’re running this page via a local server (not from a file:// URL).</div>';
+      }
+    })();
   </script>
 </body>
 </html>
