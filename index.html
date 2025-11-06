@@ -13,6 +13,7 @@
     .img-loaded.img-skeleton::after{ display:none; }
     @keyframes shimmer{ 0%{background-position:-200% 0} 100%{background-position:200% 0} }
   </style>
+  <meta name="color-scheme" content="light dark" />
 </head>
 <body class="bg-gray-50 text-gray-900 scroll-smooth">
   <!-- HEADER -->
@@ -361,10 +362,36 @@
 
     // Parse CSV text into objects supporting extra columns
     function parseCSV(text){
-      const lines = text.split(/?
-/).filter(l=>l.trim().length>0);
+      // Normalize newlines and strip BOM
+      text = (text || '').replace(/
+?/g, '
+').replace(/^﻿/, '');
+      const lines = text.split('
+').filter(l=>l.trim().length>0);
       if(!lines.length) return [];
-      const headers = lines.shift().split(',').map(h => h.trim().toLowerCase());
+
+      // Auto-detect delimiter: comma vs semicolon
+      const headProbe = lines[0];
+      const commaCnt = (headProbe.match(/,/g)||[]).length;
+      const semiCnt  = (headProbe.match(/;/g)||[]).length;
+      const DELIM = semiCnt>commaCnt ? ';' : ',';
+
+      // Safe split respecting quotes
+      const splitLine = (line) => {
+        const out=[]; let cur=''; let q=false;
+        for(let i=0;i<line.length;i++){
+          const ch=line[i];
+          if(ch==='"'){
+            if(q && line[i+1]==='"'){ cur+='"'; i++; }
+            else q=!q;
+          } else if(ch===DELIM && !q){ out.push(cur); cur=''; }
+          else { cur+=ch; }
+        }
+        out.push(cur);
+        return out.map(s=>s.trim());
+      };
+
+      const headers = splitLine(lines.shift()).map(h=>h.toLowerCase());
       const idx = (name) => headers.indexOf(name);
       const ci = idx('category');
       const ii = idx('item');
@@ -372,6 +399,21 @@
       const imgi = idx('image');
       const di = idx('description');
       if (ci<0 || ii<0){ alert('CSV must include category and item columns.'); return []; }
+
+      const rows = lines.map(line => {
+        const cols = splitLine(line);
+        const rec = {
+          category: (cols[ci]||'Uncategorized').trim(),
+          item: (cols[ii]||'Unnamed').trim(),
+          price: undefined,
+          image: imgi>=0 ? (cols[imgi]||'').replace(/^\//,'') : '', // strip leading slash to avoid domain root on GitHub Pages
+          description: di>=0 ? (cols[di]||'') : ''
+        };
+        if (pi>=0){ const p = parseFloat((cols[pi]||'').replace(',','.')); if (!isNaN(p)) rec.price = p; }
+        return rec;
+      }).filter(r => r.item);
+      return rows;
+    }
       const rows = lines.map(line => {
         const cols = line.match(/(?:\"([^\"]*)\")|([^,]+)/g)?.map(c => c.replace(/^\"|\"$/g,'').trim()) || [];
         const rec = {
@@ -415,7 +457,27 @@
     // Auto-load CSV from /assets/menu.csv on first load
     async function autoloadCSV(){
       try{
-        const res = await fetch('assets/menu.csv', {cache:'no-cache'});
+        if (location.protocol === 'file:') throw new Error('file-protocol');
+        const repoBase = (location.pathname.endsWith('/') ? location.pathname : location.pathname.replace(/[^/]+$/, '/'));
+        const csvUrl = repoBase + 'assets/menu.csv?v=' + Date.now();
+        const res = await fetch(csvUrl, {cache:'no-cache'});
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const text = await res.text();
+        const parsed = parseCSV(text);
+        if(parsed.length){ menuItems = parsed; saveMenu(); }
+      }catch(err){
+        console.warn('Autoload CSV skipped:', err.message);
+        const note = document.createElement('div');
+        note.className = 'mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2';
+        note.innerHTML = 'Cannot auto-load <code>assets/menu.csv</code>. ' +
+                         (location.protocol==='file:' ? 
+                           'You opened this file directly (file://). Please use a local server or the Upload CSV button.' : 
+                           'Check GitHub Pages is enabled (Settings → Pages), the CSV path is <code>assets/menu.csv</code>, and image paths do not start with <code>/</code>.');
+        document.querySelector('section').prepend(note);
+      }finally{
+        renderCategoryChips(); renderMenu(); renderCart(); renderOrders(); renderTotals();
+      }
+    });
         if(!res.ok) throw new Error('No CSV found');
         const text = await res.text();
         const parsed = parseCSV(text);
