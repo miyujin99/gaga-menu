@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menu Order Collector</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .scroll-smooth { scroll-behavior: smooth; }
+    .chip { @apply inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium; }
+    .img-skeleton{ position:relative; overflow:hidden; }
+    .img-skeleton::after{ content:""; position:absolute; inset:0; background:linear-gradient(90deg,#eee,#f5f5f5,#eee); animation:shimmer 1.2s infinite; }
+    .img-loaded.img-skeleton::after{ display:none; }
+    @keyframes shimmer{ 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 scroll-smooth">
+  <!-- HEADER -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="text-lg md:text-xl font-semibold">🍽️ Menu Order Collector</h1>
+      <div class="flex items-center gap-2 text-xs">
+        <button id="btnExportOrders" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">Download Orders (CSV)</button>
+        <button id="btnExportTotals" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">Download Item Totals (CSV)</button>
+        <button id="btnResetAll" class="text-red-600 border border-red-200 rounded-lg px-3 py-1.5 hover:bg-red-50">Reset All</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 space-y-8">
+    <!-- SOURCE REFERENCE -->
+    <div class="text-xs text-gray-600">
+      <span class="font-medium">Menu data:</span> auto-loaded from <code>/assets/menu.csv</code>. You can still upload another CSV to override during this session.
+    </div>
+
+    <!-- ADMIN: MENU DATA CONTROLS -->
+    <section class="bg-white border rounded-2xl p-4 md:p-5">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <h2 class="text-lg font-semibold">1) Load/Manage Menu Items</h2>
+        <div class="flex gap-2 text-xs">
+          <button id="btnAddSample" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">Load Sample Items</button>
+          <label class="border rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer">
+            <input id="csvFile" type="file" accept=".csv" class="hidden" />
+            Upload CSV
+          </label>
+          <button id="btnDownloadTemplate" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">CSV Template</button>
+        </div>
+      </div>
+      <p class="text-sm text-gray-600 mt-1">Accepted CSV headers: <code class="bg-gray-100 px-1 rounded">category</code>, <code class="bg-gray-100 px-1 rounded">item</code>, <code class="bg-gray-100 px-1 rounded">price</code> (optional), <code class="bg-gray-100 px-1 rounded">image</code> (optional URL or relative path), <code class="bg-gray-100 px-1 rounded">description</code> (optional).</p>
+
+      <div id="categoryChips" class="mt-4 flex flex-wrap gap-2"></div>
+      <div class="mt-3 flex items-center gap-3">
+        <input id="searchInput" type="text" placeholder="Search items…" class="border rounded-lg px-3 py-2 w-full md:w-80" />
+        <button id="clearSearch" class="text-xs border rounded-lg px-2.5 py-2">Clear</button>
+      </div>
+
+      <div id="menuGrid" class="grid sm:grid-cols-2 md:grid-cols-3 gap-4 mt-5"></div>
+    </section>
+
+    <!-- ORDER ENTRY -->
+    <section class="bg-white border rounded-2xl p-4 md:p-5">
+      <h2 class="text-lg font-semibold">2) Place Your Order</h2>
+      <div class="grid md:grid-cols-2 gap-4 mt-2">
+        <div>
+          <label class="text-sm">Your name</label>
+          <input id="customerName" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="e.g., Alice Nguyen" />
+        </div>
+        <div>
+          <label class="text-sm">Notes (optional)</label>
+          <input id="orderNote" type="text" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="No spicy, less sugar, etc." />
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <h3 class="font-medium mb-2">Your cart</h3>
+        <div id="cartList" class="space-y-2"></div>
+        <div class="flex items-center justify-between mt-3">
+          <span class="text-sm text-gray-600">Tip: Add from the menu above. Adjust quantity here.</span>
+          <button id="btnSubmitOrder" class="bg-emerald-600 text-white rounded-lg px-4 py-2 hover:bg-emerald-700">Submit Order</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIVE ORDERS & SUMMARY -->
+    <section class="bg-white border rounded-2xl p-4 md:p-5">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <h2 class="text-lg font-semibold">3) Orders & Summary</h2>
+        <div class="text-xs flex gap-2">
+          <button id="btnExportOrders2" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">Download Orders (CSV)</button>
+          <button id="btnExportTotals2" class="border rounded-lg px-3 py-1.5 hover:bg-gray-50">Download Item Totals (CSV)</button>
+        </div>
+      </div>
+
+      <details class="mt-3 group" open>
+        <summary class="cursor-pointer select-none flex items-center justify-between bg-gray-50 border rounded-lg px-3 py-2">
+          <span class="font-medium">All Orders (by person)</span>
+          <svg class="w-4 h-4 text-gray-500 group-open:rotate-90 transition-transform" viewBox="0 0 20 20"><path fill="currentColor" d="M7 5l5 5-5 5z"/></svg>
+        </summary>
+        <div id="ordersTable" class="mt-3 overflow-x-auto"></div>
+      </details>
+
+      <details class="mt-3 group" open>
+        <summary class="cursor-pointer select-none flex items-center justify-between bg-gray-50 border rounded-lg px-3 py-2">
+          <span class="font-medium">Item Totals</span>
+          <svg class="w-4 h-4 text-gray-500 group-open:rotate-90 transition-transform" viewBox="0 0 20 20"><path fill="currentColor" d="M7 5l5 5-5 5z"/></svg>
+        </summary>
+        <div id="totalsTable" class="mt-3 overflow-x-auto"></div>
+      </details>
+    </section>
+  </main>
+
+  <!-- Card Template with Image -->
+  <template id="menuCardTpl">
+    <div class="border rounded-xl bg-white shadow-sm overflow-hidden">
+      <div class="aspect-[4/3] bg-gray-100 img-skeleton">
+        <img data-el="img" alt="" class="w-full h-full object-cover" loading="lazy" />
+      </div>
+      <div class="p-3">
+        <div class="text-xs text-gray-500" data-el="category"></div>
+        <div class="font-medium" data-el="item"></div>
+        <div class="text-xs text-gray-500" data-el="price"></div>
+        <div class="text-xs text-gray-600 mt-1 line-clamp-2" data-el="desc"></div>
+        <div class="flex items-center justify-between gap-2 mt-3">
+          <input type="number" min="1" value="1" class="w-16 border rounded-lg px-2 py-1 text-sm" data-el="qty">
+          <button class="border rounded-lg px-3 py-1.5 text-sm hover:bg-gray-50" data-el="add">Add</button>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script>
+    // ===== State =====
+    const STORAGE_KEYS = {
+      MENU: 'menuItems.v2', // bump version because structure changed (image/description)
+      ORDERS: 'orders.v1'
+    };
+
+    /** @type {{category:string,item:string,price?:number,image?:string,description?:string}[]} */
+    let menuItems = JSON.parse(localStorage.getItem(STORAGE_KEYS.MENU) || '[]');
+    /** @type {{name:string,note?:string,items:{item:string,category:string,price?:number,qty:number}[],createdAt:string}[]} */
+    let orders = JSON.parse(localStorage.getItem(STORAGE_KEYS.ORDERS) || '[]');
+
+    const els = {
+      menuGrid: document.getElementById('menuGrid'),
+      categoryChips: document.getElementById('categoryChips'),
+      searchInput: document.getElementById('searchInput'),
+      clearSearch: document.getElementById('clearSearch'),
+      csvFile: document.getElementById('csvFile'),
+      btnDownloadTemplate: document.getElementById('btnDownloadTemplate'),
+      btnAddSample: document.getElementById('btnAddSample'),
+      customerName: document.getElementById('customerName'),
+      orderNote: document.getElementById('orderNote'),
+      cartList: document.getElementById('cartList'),
+      btnSubmitOrder: document.getElementById('btnSubmitOrder'),
+      ordersTable: document.getElementById('ordersTable'),
+      totalsTable: document.getElementById('totalsTable'),
+      btnExportOrders: document.getElementById('btnExportOrders'),
+      btnExportTotals: document.getElementById('btnExportTotals'),
+      btnExportOrders2: document.getElementById('btnExportOrders2'),
+      btnExportTotals2: document.getElementById('btnExportTotals2'),
+      btnResetAll: document.getElementById('btnResetAll')
+    };
+
+    // ===== Helpers =====
+    const saveMenu = () => localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(menuItems));
+    const saveOrders = () => localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+
+    function uniqueCategories() {
+      return Array.from(new Set(menuItems.map(m => m.category))).sort();
+    }
+    function priceLabel(p) { return (typeof p === 'number' && !isNaN(p)) ? `$${p.toFixed(2)}` : '' }
+    function toCSV(rows) {
+      return rows.map(r => r.map(v => {
+        const s = String(v ?? '');
+        if (/[",
+]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+        return s;
+      }).join(',')).join('
+');
+    }
+    function download(filename, text) {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([text], {type: 'text/csv'}));
+      a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+    function clearChildren(node){ while(node.firstChild) node.removeChild(node.firstChild); }
+    function loadImage(imgEl, src){
+      if(!src){ imgEl.closest('.img-skeleton').classList.add('img-loaded'); return; }
+      imgEl.onload = () => imgEl.closest('.img-skeleton').classList.add('img-loaded');
+      imgEl.onerror = () => imgEl.closest('.img-skeleton').classList.add('img-loaded');
+      imgEl.src = src;
+      imgEl.alt = imgEl.alt || 'Menu image';
+    }
+
+    // ===== Rendering =====
+    let currentCategory = 'All';
+
+    function renderCategoryChips(){
+      clearChildren(els.categoryChips);
+      const cats = ['All', ...uniqueCategories()];
+      cats.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = 'chip border-gray-300 bg-white hover:bg-gray-50';
+        btn.textContent = cat;
+        if (cat === currentCategory) btn.classList.add('!border-gray-800');
+        btn.addEventListener('click', () => { currentCategory = cat; renderMenu(); renderCategoryChips(); });
+        els.categoryChips.appendChild(btn);
+      });
+    }
+
+    function renderMenu(){
+      clearChildren(els.menuGrid);
+      const q = (els.searchInput.value || '').toLowerCase();
+      const filtered = menuItems.filter(m => {
+        const inCat = currentCategory === 'All' || m.category === currentCategory;
+        const inSearch = !q || m.item.toLowerCase().includes(q) || (m.category||'').toLowerCase().includes(q);
+        return inCat && inSearch;
+      });
+      if (!filtered.length){
+        const empty = document.createElement('div');
+        empty.className = 'text-sm text-gray-500';
+        empty.textContent = 'No items. Upload a CSV or load samples.';
+        els.menuGrid.appendChild(empty);
+        return;
+      }
+      const tpl = document.getElementById('menuCardTpl');
+      filtered.forEach(m => {
+        const node = tpl.content.cloneNode(true);
+        node.querySelector('[data-el="category"]').textContent = m.category || '';
+        node.querySelector('[data-el="item"]').textContent = m.item || '';
+        node.querySelector('[data-el="price"]').textContent = priceLabel(m.price);
+        node.querySelector('[data-el="desc"]').textContent = m.description || '';
+        loadImage(node.querySelector('[data-el="img"]'), m.image);
+        const qtyEl = node.querySelector('[data-el="qty"]');
+        node.querySelector('[data-el="add"]').addEventListener('click', () => addToCart(m, parseInt(qtyEl.value||'1',10)));
+        els.menuGrid.appendChild(node);
+      });
+    }
+
+    // Cart state is not persisted (per person before submit)
+    let cart = [];
+    function addToCart(m, qty){
+      if (!qty || qty < 1) qty = 1;
+      const found = cart.find(c => c.item === m.item && c.category === m.category);
+      if (found) found.qty += qty; else cart.push({item:m.item, category:m.category, price:m.price, qty});
+      renderCart();
+    }
+    function renderCart(){
+      clearChildren(els.cartList);
+      if (!cart.length){
+        const p = document.createElement('p'); p.className='text-sm text-gray-500'; p.textContent='Cart is empty.'; els.cartList.appendChild(p); return;
+      }
+      cart.forEach((c, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between border rounded-lg px-3 py-2';
+        row.innerHTML = `<div class="text-sm"><span class="font-medium">${c.item}</span> <span class="text-gray-500">(${c.category})</span> ${priceLabel(c.price)}</div>`;
+        const right = document.createElement('div'); right.className='flex items-center gap-2';
+        const qty = document.createElement('input'); qty.type='number'; qty.min=1; qty.value=c.qty; qty.className='w-16 border rounded-lg px-2 py-1 text-sm';
+        qty.addEventListener('change', ()=>{ c.qty = Math.max(1, parseInt(qty.value||'1',10)); });
+        const del = document.createElement('button'); del.className='text-red-600 border border-red-200 rounded-lg px-2.5 py-1 text-sm hover:bg-red-50'; del.textContent='Remove';
+        del.addEventListener('click', ()=>{ cart.splice(idx,1); renderCart(); });
+        right.append(qty, del); row.appendChild(right); els.cartList.appendChild(row);
+      });
+    }
+
+    // Submit order
+    els.btnSubmitOrder.addEventListener('click', () => {
+      const name = (els.customerName.value || '').trim();
+      if (!name) { alert('Please enter your name.'); return; }
+      if (!cart.length){ alert('Your cart is empty.'); return; }
+      const note = (els.orderNote.value || '').trim();
+      orders.push({ name, note, items: JSON.parse(JSON.stringify(cart)), createdAt: new Date().toISOString() });
+      saveOrders();
+      cart = []; renderCart(); els.orderNote.value='';
+      renderOrders(); renderTotals();
+      alert('Order recorded!');
+    });
+
+    // Orders table
+    function renderOrders(){
+      clearChildren(els.ordersTable);
+      if (!orders.length){
+        const p = document.createElement('p'); p.className='text-sm text-gray-500'; p.textContent='No orders yet.'; els.ordersTable.appendChild(p); return;
+      }
+      const table = document.createElement('table'); table.className='min-w-full text-sm';
+      table.innerHTML = `<thead><tr class='text-left border-b'><th class='py-2 pr-3'>Name</th><th class='py-2 pr-3'>Items</th><th class='py-2 pr-3'>Note</th><th class='py-2'>Time</th></tr></thead><tbody></tbody>`;
+      const tb = table.querySelector('tbody');
+      orders.forEach(o => {
+        const tr = document.createElement('tr'); tr.className='border-b align-top';
+        const itemsStr = o.items.map(i => `${i.item} × ${i.qty}`).join('; ');
+        tr.innerHTML = `<td class='py-2 pr-3 font-medium'>${o.name}</td><td class='py-2 pr-3'>${itemsStr}</td><td class='py-2 pr-3 text-gray-600'>${o.note||''}</td><td class='py-2 text-gray-500'>${new Date(o.createdAt).toLocaleString()}</td>`;
+        tb.appendChild(tr);
+      });
+      els.ordersTable.appendChild(table);
+    }
+
+    // Totals table
+    function renderTotals(){
+      clearChildren(els.totalsTable);
+      if (!orders.length){
+        const p = document.createElement('p'); p.className='text-sm text-gray-500'; p.textContent='No data yet.'; els.totalsTable.appendChild(p); return;
+      }
+      const totals = new Map(); // key: item|category
+      orders.forEach(o => o.items.forEach(i => {
+        const key = i.item + '|' + i.category;
+        totals.set(key, (totals.get(key)||0) + i.qty);
+      }));
+      const rows = Array.from(totals.entries()).map(([key, qty]) => {
+        const [item, category] = key.split('|');
+        return {item, category, qty};
+      }).sort((a,b)=> a.category.localeCompare(b.category) || a.item.localeCompare(b.item));
+
+      const table = document.createElement('table'); table.className='min-w-full text-sm';
+      table.innerHTML = `<thead><tr class='text-left border-b'><th class='py-2 pr-3'>Category</th><th class='py-2 pr-3'>Item</th><th class='py-2'>Total Qty</th></tr></thead><tbody></tbody>`;
+      const tb = table.querySelector('tbody');
+      rows.forEach(r => {
+        const tr = document.createElement('tr'); tr.className='border-b';
+        tr.innerHTML = `<td class='py-2 pr-3'>${r.category}</td><td class='py-2 pr-3'>${r.item}</td><td class='py-2 font-medium'>${r.qty}</td>`;
+        tb.appendChild(tr);
+      });
+      els.totalsTable.appendChild(table);
+    }
+
+    // Export CSV
+    function exportOrdersCSV(){
+      const header = ['name','note','item','category','price','qty','createdAt'];
+      const rows = [header];
+      orders.forEach(o => o.items.forEach(i => rows.push([
+        o.name, o.note||'', i.item, i.category, (i.price??''), i.qty, o.createdAt
+      ])));
+      download('orders_detail.csv', toCSV(rows));
+    }
+    function exportTotalsCSV(){
+      const counts = new Map();
+      orders.forEach(o=>o.items.forEach(i=>{
+        const key=i.item+'|'+i.category; counts.set(key,(counts.get(key)||0)+i.qty);
+      }));
+      const rows=[['category','item','total_qty']];
+      for (const [k,v] of counts.entries()){
+        const [item, category] = k.split('|');
+        rows.push([category, item, v]);
+      }
+      download('item_totals.csv', toCSV(rows));
+    }
+
+    [els.btnExportOrders, els.btnExportOrders2].forEach(b=>b.addEventListener('click', exportOrdersCSV));
+    [els.btnExportTotals, els.btnExportTotals2].forEach(b=>b.addEventListener('click', exportTotalsCSV));
+
+    // CSV Template & Upload (with image + description)
+    els.btnDownloadTemplate.addEventListener('click', () => {
+      const tpl = toCSV([
+        ['category','item','price','image','description'],
+        ['Drink','Milk Tea',4.5,'assets/images/milk_tea.jpg','Classic black tea with milk'],
+        ['Drink','Lemon Tea',3.5,'assets/images/lemon_tea.jpg','Fresh lemon with black tea'],
+        ['Food','Fried Chicken',6.0,'assets/images/fried_chicken.jpg','Crispy chicken bites'],
+        ['Food','Fries',2.5,'assets/images/fries.jpg','Shoestring fries']
+      ]);
+      download('menu_template.csv', tpl);
+    });
+
+    // Parse CSV text into objects supporting extra columns
+    function parseCSV(text){
+      const lines = text.split(/?
+/).filter(l=>l.trim().length>0);
+      if(!lines.length) return [];
+      const headers = lines.shift().split(',').map(h => h.trim().toLowerCase());
+      const idx = (name) => headers.indexOf(name);
+      const ci = idx('category');
+      const ii = idx('item');
+      const pi = idx('price');
+      const imgi = idx('image');
+      const di = idx('description');
+      if (ci<0 || ii<0){ alert('CSV must include category and item columns.'); return []; }
+      const rows = lines.map(line => {
+        const cols = line.match(/(?:\"([^\"]*)\")|([^,]+)/g)?.map(c => c.replace(/^\"|\"$/g,'').trim()) || [];
+        const rec = {
+          category: cols[ci] || 'Uncategorized',
+          item: cols[ii] || 'Unnamed',
+          price: undefined,
+          image: imgi>=0 ? cols[imgi] || '' : '',
+          description: di>=0 ? cols[di] || '' : ''
+        };
+        if (pi>=0){ const p = parseFloat(cols[pi]); if (!isNaN(p)) rec.price = p; }
+        return rec;
+      }).filter(r => r.item);
+      return rows;
+    }
+
+    // Upload CSV override
+    els.csvFile.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0]; if (!file) return;
+      const text = await file.text();
+      const parsed = parseCSV(text);
+      if(!parsed.length) return;
+      menuItems = parsed; saveMenu();
+      currentCategory = 'All'; renderCategoryChips(); renderMenu();
+    });
+
+    // Sample Loader (with images)
+    els.btnAddSample.addEventListener('click', () => {
+      menuItems = [
+        {category:'Drink', item:'Classic Milk Tea', price:4.5, image:'assets/images/milk_tea.jpg', description:'Classic black tea with milk'},
+        {category:'Drink', item:'Oolong Lemon Tea', price:3.8, image:'assets/images/lemon_tea.jpg', description:'Oolong tea with lemon'},
+        {category:'Drink', item:'Black Coffee', price:2.5, image:'assets/images/coffee.jpg', description:'Hot brewed coffee'},
+        {category:'Snack', item:'French Fries', price:2.2, image:'assets/images/fries.jpg', description:'Crispy fries'},
+        {category:'Snack', item:'Fried Chicken Bites', price:3.9, image:'assets/images/fried_chicken.jpg', description:'Crispy chicken'},
+        {category:'Snack', item:'Cheese Sticks', price:3.1, image:'assets/images/cheese_sticks.jpg', description:'Mozzarella sticks'},
+        {category:'Food', item:'Chicken Rice', price:5.9, image:'assets/images/chicken_rice.jpg', description:'Steamed rice with chicken'},
+        {category:'Food', item:'Beef Noodles', price:6.5, image:'assets/images/beef_noodles.jpg', description:'Beef noodle soup'}
+      ];
+      saveMenu(); currentCategory='All'; renderCategoryChips(); renderMenu();
+    });
+
+    // Auto-load CSV from /assets/menu.csv on first load
+    async function autoloadCSV(){
+      try{
+        const res = await fetch('assets/menu.csv', {cache:'no-cache'});
+        if(!res.ok) throw new Error('No CSV found');
+        const text = await res.text();
+        const parsed = parseCSV(text);
+        if(parsed.length){ menuItems = parsed; saveMenu(); }
+      }catch(err){ /* silently ignore if not present when opening locally */ }
+      finally{ renderCategoryChips(); renderMenu(); renderCart(); renderOrders(); renderTotals(); }
+    }
+
+    // Reset
+    els.btnResetAll.addEventListener('click', () => {
+      if (!confirm('Clear ALL menu and orders?')) return;
+      localStorage.removeItem(STORAGE_KEYS.MENU);
+      localStorage.removeItem(STORAGE_KEYS.ORDERS);
+      menuItems=[]; orders=[]; cart=[];
+      renderCategoryChips(); renderMenu(); renderCart(); renderOrders(); renderTotals();
+    });
+
+    // Initial render (will autoload CSV)
+    autoloadCSV();
+  </script>
+</body>
+</html>
