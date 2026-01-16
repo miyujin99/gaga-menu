@@ -493,27 +493,6 @@
       margin: 0 auto;
     }
 
-/* ===== PDF EXPORT: avoid cutting text lines across pages ===== */
-#pdfWrapper, #pdfWrapper * {
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-
-#pdfWrapper p,
-#pdfWrapper div,
-#pdfWrapper dd,
-#pdfWrapper dt {
-  page-break-inside: auto;
-  break-inside: auto;
-}
-
-#pdfWrapper .box,
-#pdfWrapper .profile-row,
-#pdfWrapper .profile-col {
-  page-break-inside: auto;
-  break-inside: auto;
-}
-
     .pdf-header-bar {
       display: flex;
       align-items: center;
@@ -1078,6 +1057,31 @@
   font-weight: 700;
   color: #1f2937;
 }
+/* ===== PDF export: keep text readable across page breaks ===== */
+#pdfWrapper, #pdfWrapper *{
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+/* Allow breaking, but avoid breaking INSIDE text line blocks */
+#pdfWrapper p,
+#pdfWrapper dd,
+#pdfWrapper dt,
+#pdfWrapper .dept-tag,
+#pdfWrapper .pill-small{
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+#pdfWrapper .box-header,
+#pdfWrapper .box-subtitle,
+#pdfWrapper .profile-sbi,
+#pdfWrapper .dl-grid,
+#pdfWrapper .dl-basic{
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
 
   </style>
 </head>
@@ -2817,14 +2821,21 @@ $("crossNotice").style.display = anyCross ? "inline-block" : "none";
     function downloadProfilePdf(payload) {
       const baseName = getFileBaseName(payload);
       const opt = {
-	  margin: [10, 10, 10, 10],
-	  filename: baseName + ".pdf",
-	  image: { type: "jpeg", quality: 0.98 },
-	  pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-	  html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
-	  jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
-	};
-
+        margin: [10, 10, 10, 10],
+        filename: baseName + ".pdf",
+        image: { type: "jpeg", quality: 0.98 },
+		pagebreak: { mode: ["css", "avoid-all", "legacy"] },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          scrollY: 0
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait"
+        }
+      };
 
       const element = document.getElementById("pdfWrapper");
 
