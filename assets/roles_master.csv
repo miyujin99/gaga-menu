@@ -1,0 +1,79 @@
+﻿department,position,succession
+Asia Human Resources,Senior Talent Development Specialist,FALSE
+Asia Human Resources,Talent Development Coordinator,FALSE
+Asia Human Resources,Talent Development Specialist,FALSE
+Asia Human Resources,Senior Team Leader of Human Resources,TRUE
+Asia Human Resources,Talent Development Project Leader,FALSE
+Asia Human Resources,Team Leader of Talent Development,TRUE
+CGI,3D Animation Artist,FALSE
+CGI,Product Content-Digital Asset Coordinator,FALSE
+CGI,3D Artist,FALSE
+CGI,3D Material Artist,FALSE
+CGI,CGI Photographer,FALSE
+CGI,Team Leader of CGI,FALSE
+Engineering,Process Engineer,FALSE
+Engineering,Industrial Engineer,FALSE
+Engineering,Packaging Engineer,FALSE
+Engineering,Project Engineer,FALSE
+Engineering,Packaging Engineering Specialist,FALSE
+Engineering,Engineering Assistant,FALSE
+Engineering,Compliance Engineer,FALSE
+Engineering,System Process Engineer,FALSE
+Engineering,Product Engineer,FALSE
+Engineering,Senior Compliance Engineer,FALSE
+Engineering,Senior Industrial Engineer,FALSE
+Engineering,Senior System Process Engineer,FALSE
+Engineering,Team Leader of Product Engineering,FALSE
+Engineering,Senior Team Leader of  Compliance Engineering,TRUE
+Engineering,Engineering Project Manager,TRUE
+Engineering,Senior Team Leader of Product Engineering,TRUE
+Engineering,Team Leader of System Process Engineering,FALSE
+Engineering,Senior System Engineer,FALSE
+Engineering,System Engineer,FALSE
+Engineering,Manager of Engineering,FALSE
+HR and Administration,HR and Admin Officer,FALSE
+HR and Administration,Accountant,FALSE
+HR and Administration,Senior IT Specialist,FALSE
+HR and Administration,Recruiting Specialist,FALSE
+HR and Administration,IT Specialist,FALSE
+HR and Administration,Senior HR and Admin Officer,FALSE
+HR and Administration,Senior Accountant,FALSE
+HR and Administration,Manager of HR and Admin,FALSE
+HR and Administration,Team Leader of IT,TRUE
+HR and Administration,Team Leader of Accounting,TRUE
+HR and Administration,Team Leader of Recruitment,TRUE
+Management,Vice President of Sourcing,FALSE
+Product Development,Product Developer,FALSE
+Product Development,Finishing Technician,FALSE
+Product Development,Product Development Administrator,FALSE
+Product Development,Senior Product Developer,FALSE
+Product Development,Team Leader of Product Development,TRUE
+Product Development,Senior Team Leader of Product Development,FALSE
+Product Development,Finishing Specialist,FALSE
+Product Development,Team Leader of Product Development Material,TRUE
+Product Development,Manager of Product Development,FALSE
+Product Development,Product Development Project Leader,FALSE
+Quality Assurance,Quality Control Inspector,FALSE
+Quality Assurance,Quality Assurance CI,FALSE
+Quality Assurance,Field Testing Coordinator,FALSE
+Quality Assurance,Vendor Champion,TRUE
+Quality Assurance,Quality Assurance Administrator,FALSE
+Quality Assurance,Senior Field Testing Coordinator,FALSE
+Quality Assurance,Team Leader of Performance Testing,TRUE
+Quality Assurance,Senior Quality Assurance CI,FALSE
+Quality Assurance,Quality Manager,FALSE
+Quality Assurance,Quality Project Manager,FALSE
+Sample Quality Engineering,Sample Quality Engineer,FALSE
+Sample Quality Engineering,Senior Sample Quality Engineer,FALSE
+Sample Quality Engineering,Sample Quality Engineering Project Leader,FALSE
+Strategic Sourcing,Senior Manager of Strategic Sourcing,FALSE
+Strategic Sourcing,Material Assurance Specialist,FALSE
+Strategic Sourcing,Team Leader of Material Assurance,FALSE
+Strategic Sourcing,Cost Analyst,FALSE
+Strategic Sourcing,Material Sourcing Specialist,FALSE
+Strategic Sourcing,Manager of Strategic Sourcing,FALSE
+Strategy Execution,Solutions Development Specialist,FALSE
+Strategy Execution,Process Integration Associate,FALSE
+Strategy Execution,Strategy Specialist,FALSE
+Strategy Execution,Manager of Strategy Execution,FALSE
+Strategy Execution,Team Leader of Solutions Development,TRUE

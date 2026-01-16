@@ -1,377 +1,3228 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Team Food Order</title>
+  <meta charset="UTF-8" />
+  <title>Candidate Profile Builder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Favicon -->
+<link rel="icon" type="image/png" href="./assets/favicon.png?v=1">
+<link rel="shortcut icon" href="./assets/favicon.png?v=1">
+
+  <!-- PDF export library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- SheetJS for Excel export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <style>
-    :root { --brand:#f97316; --ink:#1f2937; --muted:#6b7280; --line:#e5e7eb; --bg:#f8fafc; }
-    * { box-sizing: border-box; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:var(--ink); background:var(--bg); }
-    header { position:sticky; top:0; z-index:10; background:#fff; border-bottom:1px solid var(--line); }
-    .wrap { max-width:1100px; margin:auto; padding:18px; }
-    h1 { font-size:clamp(20px, 3vw, 28px); margin:0; }
-    .muted { color:var(--muted); }
-    .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:16px; }
-    .card { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; display:flex; flex-direction:column; }
-    .thumb { width:100%; aspect-ratio:4/3; object-fit:cover; background:#fff; }
-    .card-body { padding:12px; display:flex; flex-direction:column; gap:8px; }
-    .title { font-weight:600; }
-    .price { color:#065f46; font-weight:600; font-size:14px; }
-    .qty { display:flex; align-items:center; gap:6px; margin-top:auto; }
-    .qty input { width:64px; padding:6px 8px; border:1px solid var(--line); border-radius:8px; text-align:center; font-weight:600; }
-    .qty button { border:1px solid var(--line); background:#fff; border-radius:8px; width:32px; height:32px; font-weight:700; cursor:pointer; }
-    .panel { background:#fff; border:1px solid var(--line); border-radius:14px; padding:12px; }
-    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-    .row > * { margin: 4px 0; }
-    input[type="text"] { padding:10px 12px; border:1px solid var(--line); border-radius:10px; min-width:260px; }
-    .btn { appearance:none; border:none; border-radius:10px; padding:10px 14px; font-weight:600; cursor:pointer; }
-    .btn-primary { background:var(--brand); color:#fff; }
-    .btn-line { background:#fff; border:1px solid var(--line); }
-    .btn:disabled { opacity:.6; cursor:not-allowed; }
-    table { width:100%; border-collapse:collapse; }
-    th, td { border-top:1px solid var(--line); padding:8px 10px; text-align:left; font-size:14px; }
-    th { color:var(--muted); font-weight:600; }
-    .pill { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; border:1px solid var(--line); border-radius:999px; font-size:12px; }
-    .footer { color:var(--muted); font-size:12px; margin-top:8px; }
-    .hint { font-size:12px; color:var(--muted); }
-    .totals { font-weight:700; }
-    .empty { padding:6px 8px; color:var(--muted); }
+    :root {
+      --ashley-orange: #f78e2f;
+      --ashley-orange-dark: #d86f12;
+      --bg-light: #f3f4f6;
+      --text-main: #111827;
+      --border-soft: #e5e7eb;
+      --blue-soft: #e0ecff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        Arial, sans-serif;
+      background: var(--bg-light);
+      color: var(--text-main);
+    }
+
+    .page {
+      max-width: 1100px;
+      margin: 24px auto 40px;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 14px;
+      border: 1px solid var(--border-soft);
+      padding: 20px 20px 22px;
+      margin-bottom: 18px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    /* ========== HEADER ========== */
+
+    .header-main {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .header-logo {
+      height: 40px;
+      width: auto;
+      object-fit: contain;
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--ashley-orange-dark);
+      letter-spacing: 0.02em;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      font-size: 11px;
+      font-weight: 600;
+      color: #9a3412;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .tag-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--ashley-orange);
+    }
+
+    .info-badge {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #6b7280;
+    }
+
+    /* ========== FORM SECTIONS ========== */
+
+    .section-block {
+      border-radius: 12px;
+      padding: 14px 14px 10px;
+      margin-bottom: 14px;
+      background: linear-gradient(
+          90deg,
+          rgba(247, 142, 47, 0.09),
+          rgba(59, 130, 246, 0.02)
+        ),
+        #ffffff;
+      border-left: 4px solid var(--ashley-orange);
+    }
+
+    .section-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    h2.section-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #111827;
+    }
+
+    h2.section-title span.section-badge {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #fb923c;
+      background: #fff7ed;
+      border-radius: 999px;
+      padding: 2px 9px;
+      border: 1px solid #fed7aa;
+    }
+
+    .section-chip {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      white-space: nowrap;
+    }
+
+    .section-desc {
+      font-size: 12px;
+      color: #6b7280;
+      margin: 0 0 10px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px 16px;
+    }
+
+    @media (max-width: 768px) {
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field {
+      margin-bottom: 8px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .field-label .required {
+      color: #dc2626;
+    }
+
+    .field-help {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 3px;
+    }
+
+    .field-error {
+      font-size: 11px;
+      color: #b91c1c;
+      margin-top: 3px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    select,
+    textarea {
+      width: 100%;
+      font-size: 13px;
+      padding: 7px 9px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+      background: #f9fafb;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--ashley-orange);
+      background: #ffffff;
+      box-shadow: 0 0 0 1px rgba(247, 142, 47, 0.15);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+      line-height: 1.4;
+    }
+
+	.pill-note {
+	  display: inline-flex;
+	  align-items: center;
+	  gap: 6px;
+	  font-size: 11px;
+	  padding: 4px 10px;
+	  border-radius: 999px;
+	
+	  background: #fff7ed;        /* cam nhạt */
+	  color: #9a3412;             /* text cam đậm, dễ đọc */
+	
+	  border: 1px solid #fed7aa;  /* cam đậm hơn nền */
+	  margin-bottom: 8px;
+	}
+
+    .preference-wrapper {
+      border-radius: 10px;
+      border: 1px dashed #e5e7eb;
+      padding: 10px 10px 6px;
+      margin-bottom: 8px;
+      background: #f9fafb;
+    }
+
+    .preference-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .pref-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .pref-tag {
+      font-size: 11px;
+      color: #9ca3af;
+    }
+
+    .pref-dept-label {
+      font-size: 11px;
+      color: #4b5563;
+      margin-top: 4px;
+    }
+
+    .checkbox-row,
+    .radio-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      font-size: 13px;
+    }
+
+    .checkbox-item,
+    .radio-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .checkbox-item input,
+    .radio-item input {
+      margin: 0;
+    }
+
+    .consent-line {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 6px;
+      align-items: flex-start;
+      font-size: 12px;
+      color: #374151;
+    }
+
+    .consent-line input {
+      margin-top: 3px;
+    }
+
+    .btn-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background-color 0.15s, box-shadow 0.15s, transform 0.05s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(
+        135deg,
+        var(--ashley-orange),
+        var(--ashley-orange-dark)
+      );
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(248, 153, 60, 0.35);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(
+        135deg,
+        var(--ashley-orange-dark),
+        #b45309
+      );
+      box-shadow: 0 6px 16px rgba(248, 153, 60, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #e5e7eb;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e7eb;
+    }
+
+/* Soft Ashley Orange buttons (Success Modal download) */
+.btn-orange-soft {
+  background: #fff7ed;            /* cam nhạt */
+  color: #9a3412;                 /* cam đậm chữ */
+  border: 1px solid #fed7aa;
+}
+
+.btn-orange-soft:hover {
+  background: #ffedd5;
+  border-color: #fdba74;
+}
+
+.btn-orange-soft:active {
+  background: #fed7aa;
+}
+
+    .btn-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .success-msg {
+      font-size: 12px;
+      color: #15803d;
+      margin-top: 8px;
+    }
+
+    .json-output {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+      font-size: 11px;
+      background: #020617;
+      color: #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      overflow: auto;
+      max-height: 260px;
+      border: 1px solid #0f172a;
+    }
+
+    .json-output strong {
+      color: #facc15;
+    }
+
+    .has-error {
+      border-color: #f97373 !important;
+      background: #fef2f2 !important;
+    }
+
+    hr.soft {
+      border: none;
+      border-bottom: 1px dashed #e5e7eb;
+      margin: 16px 0;
+    }
+
+    /* ========== MODAL & PROFILE (PDF) ========== */
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+    }
+
+    .modal-dialog {
+      position: relative;
+      background: #f3f4f6;
+      border-radius: 16px;
+      max-width: 900px;
+      width: 96%;
+      max-height: 92vh;
+      overflow: auto;
+      padding: 18px 20px 20px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.65);
+    }
+
+    .modal-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .modal-close {
+      border: none;
+      background: transparent;
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+      color: #6b7280;
+    }
+
+    /* PDF wrapper roughly A4 width */
+    #pdfWrapper {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 16px 18px 18px;
+      border: 1px solid #e5e7eb;
+      width: 800px;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .pdf-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      margin-bottom: 12px;
+      background: linear-gradient(
+        90deg,
+        #f97316,
+        #ea580c
+      );
+      color: #fefce8;
+    }
+
+.pdf-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px; /* base */
+}
+
+.pdf-header-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.pdf-header-subtitle {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+
+    .pdf-logo-box {
+      width: 70px;
+      height: 26px;
+      border-radius: 999px;
+      background: #fef3c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #b45309;
+    }
+
+    .pdf-header-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: 11px;
+    }
+
+    .pdf-tag {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(254, 243, 199, 0.9);
+      background: rgba(254, 243, 199, 0.18);
+      font-weight: 600;
+    }
+
+    #candidateProfileCard {
+      border-radius: 10px;
+      border: 1px solid #dbeafe;
+      padding: 12px 12px 14px;
+      font-size: 13px;
+      background: #f9fafb;
+    }
+
+    .profile-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .profile-col {
+      flex: 1 1 260px;
+    }
+
+    .profile-col-full {
+      flex: 1 1 100%;
+    }
+
+    .box {
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      background: #ffffff;
+      padding: 10px 10px 8px;
+      height: 100%;
+    }
+
+    .box-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+      font-weight: 700;
+      color: #1e3a8a;
+    }
+
+    .box-header span.icon {
+      font-size: 14px;
+    }
+
+    .box-subtitle {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .dl-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px 12px;
+      font-size: 12px;
+    }
+
+    .dl-grid dt {
+      color: #6b7280;
+    }
+
+    .dl-grid dd {
+      margin: 0;
+      color: #111827;
+    }
+
+    .pill-small {
+      font-size: 11px;
+      border-radius: 999px;
+      padding: 2px 7px;
+      display: inline-block;
+    }
+
+    .pill-blue {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+    }
+
+    .pill-yellow {
+      background: #fef9c3;
+      color: #854d0e;
+      border: 1px solid #facc15;
+    }
+
+    .profile-sbi {
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .profile-sbi dt {
+      font-weight: 600;
+      color: #4b5563;
+    }
+
+    .profile-sbi dd {
+      margin: 0 0 4px;
+    }
+
+    .dept-tag {
+      font-size: 11px;
+      color: #6b7280;
+      font-style: italic;
+    }
+
+    /* Basic Info – 3-column layout */
+    .dl-basic {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px 18px;
+      font-size: 12px;
+    }
+
+    .dl-basic .bi-item {
+      min-width: 0;
+    }
+
+    .dl-basic dt {
+      font-size: 11px;
+      font-weight: 700;
+      color: #f97316;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+
+    .dl-basic dd {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    @media (max-width: 768px) {
+      .dl-basic {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Success modal */
+    .success-body {
+      font-size: 13px;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .success-body a {
+      color: var(--ashley-orange-dark);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .success-body a:hover {
+      text-decoration: underline;
+    }
+
+    /* Light Ashley Orange Header – compact version (desktop base) */
+	.header-subtitle{
+  font-size: 13px;
+  color: #5c4a3a;
+  max-width: 100%;
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+    .header-orange {
+      background: linear-gradient(
+          90deg,
+          rgba(247, 142, 47, 0.14),
+          rgba(247, 142, 47, 0.05)
+        ),
+        #fff7ed;
+      padding: 24px 28px;
+      border-radius: 16px;
+      border: 1px solid #f5d8bd;
+    }
+
+    .header-logo-big {
+      width: 200px;
+      height: auto;
+      margin-bottom: 6px;
+      display: block;
+    }
+	
+	.header-title-row{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+	
+    .page-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #1a1f50;
+      margin: 0;
+    }
+
+    .program-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #9a4a0b;
+      margin-top: -2px;
+    }
+
+    .info-badge {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: #876a54;
+      margin-top: 4px;
+    }
+
+    /* ========== MOBILE TWEAKS (PHONE) ========== */
+    @media (max-width: 600px) {
+      .page {
+        padding: 0 8px;
+        margin: 12px auto 24px;
+      }
+
+      .card {
+        padding: 14px 12px 16px;
+        margin-bottom: 12px;
+        border-radius: 12px;
+      }
+
+      .section-block {
+        padding: 10px 10px 8px;
+        margin-bottom: 10px;
+      }
+
+      .field {
+        margin-bottom: 6px;
+      }
+
+      .header-orange {
+        padding: 18px 14px;
+        border-radius: 0 0 16px 16px;
+      }
+
+      .header-logo-big {
+        width: 64px;
+        margin-bottom: 4px;
+      }
+
+      .page-title {
+        font-size: 22px;
+      }
+
+      .program-title {
+        font-size: 13px;
+      }
+
+      .header-subtitle {
+        font-size: 12px;
+      }
+
+      .info-badge {
+        font-size: 10px;
+        letter-spacing: 0.02em;
+      }
+
+      input[type="text"],
+      input[type="email"],
+      select,
+      textarea {
+        font-size: 13px;
+        padding: 9px 10px;
+      }
+
+      .btn-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+
+      #btnReset {
+        order: 2; /* Generate nằm trên, Clear nằm dưới */
+      }
+
+      .checkbox-row,
+      .radio-row {
+        gap: 6px 12px;
+        font-size: 13px;
+      }
+
+      .checkbox-item input,
+      .radio-item input {
+        width: 18px;
+        height: 18px;
+      }
+
+      .modal-dialog {
+        padding: 14px 14px 16px;
+      }
+    }
+	/* ===== Step 2 MS Form Link ===== */
+	.msform-link {
+	  display: inline-flex;
+	  align-items: center;
+	  gap: 6px;
+	  padding: 8px 14px;
+	  border-radius: 999px;
+	  font-size: 12.5px;
+	  font-weight: 700;
+	  text-decoration: none;
+	  border: 1px solid #fed7aa;
+	  transition: all 0.15s ease;
+	}
+	
+	/* ===== Step 2 Highlight Pulse ===== */
+@keyframes step2Pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(247,142,47,0.55); transform: translateY(0); }
+  60%  { box-shadow: 0 0 0 10px rgba(247,142,47,0); transform: translateY(-1px); }
+  100% { box-shadow: 0 0 0 0 rgba(247,142,47,0); transform: translateY(0); }
+}
+
+.msform-link.pulse {
+  animation: step2Pulse 1.1s ease-out 100; /* pulse 100 lần */
+}
+
+/* luôn giữ viền sáng khi unlocked (kể cả sau khi pulse xong) */
+.msform-link.unlocked {
+  background: linear-gradient(135deg, #fb923c, #f97316);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow:
+    0 6px 18px rgba(251,146,60,0.45),
+    0 0 0 2px rgba(251,146,60,0.25);
+}
+
+	
+	/* Locked state */
+.msform-link.locked {
+  background: #fef3c7;
+  color: #9a3412;
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: not-allowed;
+  animation: none !important; /* ✅ locked là không nháy */
+}
+
+	/* Unlocked state */	
+	.msform-link.unlocked:hover {
+	  transform: translateY(-1px);
+	  box-shadow: 0 6px 16px rgba(248,153,60,0.45);
+	}
+	/* ===== Micro Toast ===== */
+	.toast {
+	  position: fixed;
+	  left: 50%;
+	  bottom: 18px;
+	  transform: translateX(-50%);
+	  z-index: 1200;
+	  display: none;
+	}
+	
+	.toast.show {
+	  display: block;
+	  animation: toastIn 0.18s ease-out;
+	}
+	
+	@keyframes toastIn {
+	  from { opacity: 0; transform: translateX(-50%) translateY(6px); }
+	  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+	}
+	
+	.toast-inner {
+	  display: inline-flex;
+	  align-items: center;
+	  gap: 10px;
+	  background: #ffffff;
+	  border: 1px solid #bbf7d0;
+	  box-shadow: 0 10px 28px rgba(15,23,42,0.14);
+	  border-radius: 999px;
+	  padding: 10px 14px;
+	  color: #166534;
+	  font-size: 12.5px;
+	  font-weight: 700;
+	}
+/* ===== Header Intro / Steps (cleaner layout) ===== */
+.header-orange .header-main { gap: 12px; }
+
+.intro-line{
+  margin: 6px 0 2px;
+  font-size: 13px;
+  color: #5c4a3a;
+  line-height: 1.5;
+}
+
+.steps-grid{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0,1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.step-card{
+  background: rgba(255,255,255,0.75);
+  border: 1px solid #f5d8bd;
+  border-radius: 14px;
+  padding: 12px 12px 10px;
+  box-shadow: 0 8px 18px rgba(15,23,42,0.05);
+}
+
+.step-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+
+.step-badge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+  white-space: nowrap;
+}
+
+.step-chip{
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  white-space: nowrap;
+}
+
+.step-title{
+  font-size: 13px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 2px;
+}
+
+.step-sub{
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.step-list{
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12px;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.step-list li{ margin: 2px 0; }
+
+.header-footnote{
+  margin-top: 10px;
+  font-size: 11px;
+  color: #876a54;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  font-weight: 700;
+}
+
+/* Mobile */
+@media (max-width: 600px){
+  .steps-grid{ grid-template-columns: 1fr; }
+  .step-card{ padding: 10px 10px 8px; border-radius: 12px; }
+  .intro-line{ font-size: 12px; }
+}
+/* ===== Inline Guideline (HR / Policy) ===== */
+.guideline-note {
+  margin-top: 6px;
+  margin-bottom: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #1d4ed8;
+  background: #ffffff;
+  border-left: 3px solid #1d4ed8;
+}
+
+.guideline-note strong {
+  font-weight: 700;
+  color: #1f2937;
+}
+
   </style>
 </head>
 <body>
-  <header>
-    <div class="wrap">
-      <h1>🍽️ Team Food Order</h1>
-      <div class="muted">Loads items from <code>assets/menu.csv</code></div>
-    </div>
-  </header>
+  <div class="page">
+    <!-- HEADER -->
+<div class="card header-orange">
+  <div class="header-main">
 
-  <main class="wrap" id="app">
-    <!-- Controls -->
-    <div class="panel" style="margin-bottom:16px">
-      <div class="row">
-        <label for="person"><strong>Your name</strong></label>
-        <input id="person" type="text" placeholder="e.g., Alice Nguyen" />
-        <button id="submitOrder" class="btn btn-primary">Save this selection</button>
-        <span class="hint">Each person: enter name → set quantities → Save.</span>
+    <div class="header-title-row">
+      <div>
+        <div class="page-title">Candidate Profile Builder</div>
+        <div class="program-title">CVRO Talent Uplift Program 2026</div>
       </div>
-      <div class="row" style="margin-top:8px">
-        <span class="pill" id="liveCount">👥 0 people saved</span>
-        <span class="pill" id="liveItems">🧾 0 total items</span>
-        <button id="dlDetailed" class="btn btn-line">Download detailed CSV (by person)</button>
-        <button id="dlSummary" class="btn btn-line">Download summary CSV (item totals)</button>
-        <button id="resetAll" class="btn btn-line" title="Clear everything (this page only)">Reset</button>
+
+      <img
+        src="assets/logo.png"
+        alt="Ashley Logo"
+        class="header-logo-big"
+        id="secretSampleLogo"
+        style="cursor:pointer;"
+        title=""
+      />
+    </div>
+
+    <p class="intro-line">
+      <strong>Welcome!</strong> You have been nominated by your Head of Department for the
+      <strong>CVRO Talent Uplift Program</strong>. Participation is <strong>your choice</strong>.
+      If you wish to move forward, please complete the two steps below.
+    </p>
+
+    <div class="steps-grid">
+      <!-- STEP 1 -->
+      <div class="step-card">
+        <div class="step-top">
+          <span class="step-badge">Step 1</span>
+          <span class="step-chip">This page</span>
+        </div>
+        <div class="step-title">Build Your Candidate Profile</div>
+        <div class="step-sub">Use this page to create your Candidate Profile by 
+		sharing your career aspirations and development role preferences. 
+		You will need to:</div>
+
+        <ul class="step-list">
+          <li>Complete all required fields</li>
+          <li>Generate and download your profile in <strong>PDF</strong> and <strong>Excel</strong> format</li>
+        </ul>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-card">
+        <div class="step-top">
+          <span class="step-badge">Step 2</span>
+          <span class="step-chip">Microsoft Forms</span>
+        </div>
+        <div class="step-title">Submit Your Application</div>
+        <div class="step-sub">Upload the downloaded files to the MS Forms link below to complete your submission.</div>
+
+        <div style="margin-top:10px;">
+          <a
+            id="msFormLink"
+            href="https://forms.office.com/r/E7J5syLsjD"
+            target="_blank"
+            rel="noopener"
+            class="msform-link locked"
+            aria-disabled="true"
+          >
+            🔒 Step 2 – Open Microsoft Forms Application
+          </a>
+        </div>
+
+        <div class="step-sub" style="margin-top:8px;">
+          The form link will be available <strong>after</strong> you generate and download your Candidate Profile.
+        </div>
       </div>
     </div>
 
-    <!-- Menu grid -->
-    <div id="menuGrid" class="grid" aria-live="polite"></div>
-
-    <!-- Live submissions -->
-    <div class="panel" style="margin-top:16px">
-      <h3 style="margin:0 0 8px 0">Recent submissions</h3>
-      <div id="submissions"></div>
+    <div class="header-footnote">
+      Please complete this page in English. Fields marked (*) are required.
     </div>
 
-    <!-- Item totals -->
-    <div class="panel" style="margin-top:16px">
-      <h3 style="margin:0 0 8px 0">Live item totals</h3>
-      <div id="itemTotals"></div>
-      <div class="footer">Totals update every time someone saves their selection.</div>
+  </div>
+</div>
+
+
+
+    <!-- ========== FORM CARD ========== -->
+    <form id="applicationForm" class="card" novalidate>
+      <div id="successMessage" class="success-msg" style="display:none;">
+        ✅ Your profile passed validation. A Candidate Profile preview has been generated. Please review and confirm in the popup window.
+      </div>
+
+      <!-- SECTION 1 · CANDIDATE INFO -->
+      <section class="section-block">
+        <div class="section-header-row">
+          <h2 class="section-title">
+            <span class="section-badge">Section 1</span>
+            Candidate Information
+          </h2>
+          <div class="section-chip">👤 Who you are</div>
+        </div>
+        <p class="section-desc">
+          Basic information used to identify you and link your profile to the Talent Uplift program database.
+        </p>
+
+        <div class="grid-2">
+          <div class="field">
+            <label class="field-label" for="fullName">
+              Full Name <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="fullName"
+              name="fullName"
+              autocomplete="off"
+              placeholder="e.g., Nguyen Van A"
+            />
+            <div id="err-fullName" class="field-error"></div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="employeeId">
+              Employee ID (4 digits) <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              id="employeeId"
+              name="employeeId"
+              autocomplete="off"
+              placeholder="e.g., 0123"
+            />
+            <div id="err-employeeId" class="field-error"></div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="workEmail">
+              Work Email <span class="required">*</span>
+            </label>
+            <div class="field-help">
+              Please enter your Ashley work email (@ashleyfurniture.com).
+            </div>
+            <input
+              type="email"
+              id="workEmail"
+              name="workEmail"
+              autocomplete="off"
+              placeholder="e.g., firstname.lastname@ashleyfurniture.com"
+            />
+            <div id="err-workEmail" class="field-error"></div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="currentDept">
+              Current Department <span class="required">*</span>
+            </label>
+            <div class="field-help">
+             Please select your current department.
+            </div>
+            <select id="currentDept" name="currentDept">
+              <option value="">-- Select department --</option>
+            </select>
+            <div id="err-currentDept" class="field-error"></div>
+          </div>
+        </div>
+
+		<div class="field">
+		  <label class="field-label" for="currentRole">
+		    Current Role / Position <span class="required">*</span>
+		  </label>
+		  <div class="field-help">
+		    Please select your current role / position. Options are filtered by your current department.
+		  </div>
+		  <select id="currentRole" name="currentRole">
+		    <option value="">-- Select department first --</option>
+		  </select>
+		  <div id="err-currentRole" class="field-error"></div>
+		</div>
+
+      </section>
+
+      <hr class="soft" />
+
+      <!-- SECTION 2 · DEVELOPMENT PREFERENCES -->
+      <section class="section-block">
+        <div class="section-header-row">
+          <h2 class="section-title">
+            <span class="section-badge">Section 2</span>
+            Development Role Preferences
+          </h2>
+          <div class="section-chip">🗂️ Target roles</div>
+        </div>
+        <p class="section-desc">
+          Please select up to two roles you are interested in as part of your development journey under the Talent Uplift program.
+          At least one preference must be within your current department. </p>
+
+        <div class="pill-note">
+          <span>💡</span>
+          <span>Preference 1 is required. Preference 2 is optional but must be different.</span>
+        </div>
+
+<div class="guideline-note" style="margin-top:4px;margin-bottom:8px;">
+  <span>
+The roles shown here are prioritized and approved by CVRO Top Management to support talent development within CVRO.
+Including these roles in the program does not affect employees currently in these positions.
+Your selection is used to reflect your development direction and support your learning journey
+  </span>
+</div>
+
+
+
+        <!-- PREFERENCE 1 -->
+        <div class="preference-wrapper">
+          <div class="preference-header">
+            <div class="pref-title">Preference 1 – Primary Role</div>
+            <div class="pref-tag">Required</div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="pref1Role">
+              Target Role (Preference 1) <span class="required">*</span>
+            </label>
+            <select id="pref1Role" name="pref1Role">
+              <option value="">-- Select role --</option>
+            </select>
+            <div id="pref1DeptLabel" class="pref-dept-label">
+              Department: <em>--</em>
+            </div>
+            <div id="err-pref1Role" class="field-error"></div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="pref1Reason">
+              Reason for Preference 1 <span class="required">*</span>
+            </label>
+            <div class="field-help">
+              Why are you interested in this role and how does it align with your development path?
+            </div>
+            <textarea
+              id="pref1Reason"
+              name="pref1Reason"
+              minlength="30"
+              placeholder="Please describe your motivation and how your strengths and aspirations fit this role. Please write at least 2–3 meaningful lines."
+            ></textarea>
+            <div id="err-pref1Reason" class="field-error"></div>
+          </div>
+        </div>
+
+        <!-- PREFERENCE 2 -->
+        <div class="preference-wrapper">
+          <div class="preference-header">
+            <div class="pref-title">Preference 2 – Secondary Role</div>
+            <div class="pref-tag">Optional</div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="pref2Role">
+              Target Role (Preference 2)
+            </label>
+            <div class="field-help">
+              Optional – select only if you would like to be considered for a second role.
+            </div>
+            <select id="pref2Role" name="pref2Role">
+              <option value="">-- No secondary preference --</option>
+            </select>
+            <div id="pref2DeptLabel" class="pref-dept-label">
+              Department: <em>--</em>
+            </div>
+            <div id="err-pref2Role" class="field-error"></div>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="pref2Reason">
+              Reason for Preference 2
+            </label>
+            <div class="field-help">
+              Required only if a secondary role is selected.
+            </div>
+            <textarea
+              id="pref2Reason"
+              name="pref2Reason"
+              minlength="30"
+              placeholder="Explain why this role is also a suitable direction for your development."
+            ></textarea>
+            <div id="err-pref2Reason" class="field-error"></div>
+          </div>
+        </div>
+
+        <!-- CROSS-DEPT JUSTIFICATION -->
+        <div id="crossDeptBlock" class="field" style="display:none;">
+          <label class="field-label" for="crossJustification">
+            Cross-department Justification <span class="required">*</span>
+          </label>
+          <div class="field-help">
+            This question appears because at least one of your preferences is in a different department from your current one.
+          </div>
+          <textarea
+            id="crossJustification"
+            name="crossJustification"
+            placeholder="Describe your rationale for applying to a role in another department, including relevant experiences and how you plan to bridge any gaps."
+          ></textarea>
+          <div id="err-crossJustification" class="field-error"></div>
+        </div>
+      </section>
+
+      <hr class="soft" />
+
+      <!-- SECTION 3 · ROLE-SPECIFIC (ALL MANAGERIAL) -->
+      <section class="section-block">
+        <div class="section-header-row">
+          <h2 class="section-title">
+            <span class="section-badge">Section 3</span>
+            Role-Specific Questions (Managerial)
+          </h2>
+          <div class="section-chip">🧭 Leadership focus</div>
+        </div>
+        <p class="section-desc">
+          All target roles in this round are managerial. Please describe your leadership approach and provide one example using the SBI (Situation–Behavior–Impact) format.
+        </p>
+
+        <div class="field">
+          <label class="field-label" for="leadershipStyle">
+            Future Leadership Style <span class="required">*</span>
+          </label>
+          <div class="field-help">
+            How would you lead, motivate, and support your team in the target role?
+          </div>
+          <textarea
+            id="leadershipStyle"
+            name="leadershipStyle"
+            minlength="30"
+            placeholder="Share your view on how you would lead people in the future role."
+          ></textarea>
+          <div id="err-leadershipStyle" class="field-error"></div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">
+            Example of Influencing or Motivating Others (SBI Format)
+            <span class="required">*</span>
+          </label>
+          <div class="field-help">
+            Please describe one situation where you influenced or motivated others, using 3 short parts below.
+          </div>
+          <div class="field">
+            <label class="field-label" for="sbiSituation">
+              Situation (S) <span class="required">*</span>
+            </label>
+            <textarea
+              id="sbiSituation"
+              name="sbiSituation"
+              minlength="20"
+              placeholder="What was happening? What was the context?"
+            ></textarea>
+            <div id="err-sbiSituation" class="field-error"></div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="sbiBehavior">
+              Behavior (B) <span class="required">*</span>
+            </label>
+            <textarea
+              id="sbiBehavior"
+              name="sbiBehavior"
+              minlength="20"
+              placeholder="What did you do? What specific actions did you take?"
+            ></textarea>
+            <div id="err-sbiBehavior" class="field-error"></div>
+          </div>
+          <div class="field">
+            <label class="field-label" for="sbiImpact">
+              Impact (I) <span class="required">*</span>
+            </label>
+            <textarea
+              id="sbiImpact"
+              name="sbiImpact"
+              minlength="20"
+              placeholder="What changed as a result? What was the outcome for others, the team, or the business?"
+            ></textarea>
+            <div id="err-sbiImpact" class="field-error"></div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="soft" />
+
+      <!-- SECTION 4 · CAREER ASPIRATION & MOBILITY -->
+      <section class="section-block">
+        <div class="section-header-row">
+          <h2 class="section-title">
+            <span class="section-badge">Section 4</span>
+            Career Aspiration & Mobility
+          </h2>
+          <div class="section-chip">⚡ Direction & flexibility</div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="careerGoals">
+            Short- to Mid-term Career Goals (1–3 years)
+            <span class="required">*</span>
+          </label>
+          <textarea
+            id="careerGoals"
+            name="careerGoals"
+            minlength="30"
+            placeholder="What are your development goals for the next 1–3 years?. Share the directions you want to grow toward."
+          ></textarea>
+          <div id="err-careerGoals" class="field-error"></div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="motivation">
+            Why Do You Want to Be Considered for These Role(s)?
+            <span class="required">*</span>
+          </label>
+          <textarea
+            id="motivation"
+            name="motivation"
+            minlength="30"
+            placeholder="What motivates you to join the Talent Uplift Program and be considered for the Talent Pool? Explain your long-term aspiration, your motivation for applying, and how these selected role(s) fit your development path."
+          ></textarea>
+          <div id="err-motivation" class="field-error"></div>
+        </div>
+
+<div class="field" id="changeDeptWrap">
+  <label class="field-label">
+    Willingness to Change Department <span class="required">*</span>
+  </label>
+            <div class="field-help">
+            Would you be open to moving to another department as part of a cross-functional opportunity or a future development pathway?
+          </div>
+  <div class="radio-row">
+    <label class="radio-item">
+      <input type="radio" name="changeDept" value="yes" />
+      Yes
+    </label>
+    <label class="radio-item">
+      <input type="radio" name="changeDept" value="maybe" />
+      Maybe / Depends on role
+    </label>
+    <label class="radio-item">
+      <input type="radio" name="changeDept" value="no" />
+      No
+    </label>
+  </div>
+  <div id="err-changeDept" class="field-error"></div>
+</div>
+
+
+      </section>
+
+      <hr class="soft" />
+
+      <!-- SECTION 5 · OPTIONAL SELF-LEADERSHIP -->
+      <section class="section-block">
+        <div class="section-header-row">
+          <h2 class="section-title">
+            <span class="section-badge">Section 5</span>
+            Optional – Self-leadership Reflection
+          </h2>
+          <div class="section-chip">🌱 Ownership of growth</div>
+        </div>
+        <p class="section-desc">
+          You may share an example where you took ownership of your own learning, performance, or development (optional but helpful).
+        </p>
+
+        <div class="field">
+          <label class="field-label" for="selfLeadership">
+            Example of Self-Leadership (Optional)
+          </label>
+          <textarea
+            id="selfLeadership"
+            name="selfLeadership"
+            placeholder="Describe a recent moment where you took initiative for your own growth or performance."
+          ></textarea>
+        </div>
+      </section>
+
+      <hr class="soft" />
+
+      <!-- SECTION 6 · CONSENT -->
+      <section class="section-block">
+        <div class="section-header-row">
+          <h2 class="section-title">
+            <span class="section-badge">Section 6</span>
+            Program Understanding & Consent
+          </h2>
+          <div class="section-chip">✅ Confirmation</div>
+        </div>
+
+        <div class="field">
+          <div class="consent-line">
+            <input
+              type="checkbox"
+              id="consentDevelopment"
+              name="consentDevelopment"
+            />
+            <label for="consentDevelopment">
+              I understand that the Talent Uplift Program is designed to support my growth and readiness for future roles, rather than immediate promotion.
+            </label>
+          </div>
+          <div class="consent-line">
+            <input
+              type="checkbox"
+              id="consentSharing"
+              name="consentSharing"
+            />
+            <label for="consentSharing">
+              I understand that my profile and role preferences may be shared with relevant Department Heads and AHR to enable meaningful review and development support.
+            </label>
+          </div>
+          <div class="consent-line">
+            <input
+              type="checkbox"
+              id="consentAccuracy"
+              name="consentAccuracy"
+            />
+            <label for="consentAccuracy">
+              I confirm that the information shared in this profile reflects my current understanding and intentions.
+            </label>
+          </div>
+          <div id="err-consents" class="field-error"></div>
+        </div>
+      </section>
+
+      <!-- ACTIONS -->
+      <div class="btn-row">
+        <button type="reset" class="btn btn-secondary" id="btnReset">
+          Clear
+        </button>
+        <button type="submit" class="btn btn-primary">
+          <span class="btn-icon">📤</span>
+          <span>Generate Candidate Profile</span>
+        </button>
+      </div>
+    </form>
+
+    <!-- ========== PROFILE MODAL ========== -->
+    <div id="profileModal" class="modal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-header-row">
+          <div class="modal-title">Candidate Profile – Preview</div>
+          <button type="button" id="closeModalBtn" class="modal-close" aria-label="Close">
+            ×
+          </button>
+        </div>
+
+        <!-- PDF CONTENT -->
+        <div id="pdfWrapper">
+          <div class="pdf-header-bar">
+            <div class="pdf-header-left">
+              <div class="pdf-logo-box">CVRO</div>
+              <div>
+				<div style="font-weight:700;font-size:15px;">
+				  CANDIDATE PROFILE SUMMARY
+				</div>
+				<div style="font-size:13px;opacity:0.9;">
+				  Talent Uplift Program 2026
+				</div>
+              </div>
+            </div>
+			<div class="pdf-header-right">
+			  <div class="pdf-tag" id="pdfTagEmployeeId">ID: —</div>
+			</div>
+          </div>
+
+          <div id="candidateProfileCard">
+            <!-- ROW 1 · BASIC INFO (FULL WIDTH, 3 COLUMNS) -->
+            <div class="profile-row">
+              <div class="profile-col-full">
+                <div class="box">
+                  <div class="box-header">
+                    <span class="icon">👤</span>
+                    <span>Basic Info</span>
+                  </div>
+                  <dl class="dl-basic">
+                    <div class="bi-item">
+                      <dt>Full name</dt>
+                      <dd id="bi-name">—</dd>
+                    </div>
+                    <div class="bi-item">
+                      <dt>Department</dt>
+                      <dd id="bi-dept">—</dd>
+                    </div>
+                    <div class="bi-item">
+                      <dt>Current role</dt>
+                      <dd id="bi-role">—</dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+            </div>
+
+            <!-- ROW 2 · DEVELOPMENT PREFERENCES (2 COLUMNS) -->
+            <div class="profile-row">
+              <!-- LEFT: ROLES -->
+              <div class="profile-col">
+                <div class="box">
+                  <div class="box-header">
+                    <span class="icon">🗂️</span>
+                    <span>Development Preferences – Roles</span>
+                  </div>
+                  <div class="box-subtitle">
+                    At least one preference should be in the current department.
+                  </div>
+                  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
+                    <div>
+                      <div class="pill-small pill-blue" style="margin-bottom:3px;">1st Preference</div>
+                      <div id="pref1">—</div>
+                    </div>
+                    <div>
+                      <div class="pill-small pill-blue" style="margin-bottom:3px;">2nd Preference</div>
+                      <div id="pref2">—</div>
+                      <div id="crossNotice" class="pill-small pill-yellow" style="margin-top:4px;display:none;">
+                        Cross-dept
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- RIGHT: REASONS -->
+              <div class="profile-col">
+                <div class="box">
+                  <div class="box-header">
+                    <span class="icon">🗂️</span>
+                    <span>Development Preferences – Reasons</span>
+                  </div>
+                  <div class="box-subtitle">
+                    Brief summary of why the candidate chose these role(s).
+                  </div>
+                  <div style="font-size:12px;margin-bottom:6px;">
+                    <strong>Reason (1st Preference):</strong>
+                    <div id="rs1">—</div>
+                  </div>
+                  <div style="font-size:12px;">
+                    <strong>Reason (2nd Preference):</strong>
+                    <div id="rs2">—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ROW 3 · LEADERSHIP & CAREER ASPIRATION -->
+            <div class="profile-row">
+		<!-- LEFT: LEADERSHIP -->
+		<div class="profile-col">
+		  <div class="box">
+<div class="box-header">
+  <span class="icon">🧭</span>
+  <span>Role-Specific – Leadership</span>
+</div>
+
+<!-- A) Leadership style -->
+<div class="box-subtitle">Future Leadership Style</div>
+<div style="font-size:11px;color:#6b7280;margin:-2px 0 6px;">
+  How the candidate would lead, motivate, and support the team in the target role.
+</div>
+<div id="profile-leadershipStyle" style="font-size:12px;margin-bottom:10px;">
+  —
+</div>
+
+<!-- B) SBI label (ngắt nhẹ) -->
+<div class="box-subtitle" style="margin-top:10px;">
+  SBI Example – Influencing or Motivating Others
+</div>
+<div style="font-size:11px;color:#6b7280;margin:-2px 0 4px;">
+  A specific example written in Situation–Behavior–Impact format.
+</div>
+
+<dl class="profile-sbi">
+  <div>
+    <dt>Situation (S)</dt>
+    <dd id="profile-sbiS">—</dd>
+  </div>
+  <div>
+    <dt>Behavior (B)</dt>
+    <dd id="profile-sbiB">—</dd>
+  </div>
+  <div>
+    <dt>Impact (I)</dt>
+    <dd id="profile-sbiI">—</dd>
+  </div>
+</dl>
+
+		  </div>
+		</div>
+
+
+              <!-- RIGHT: CAREER ASPIRATION & MOTIVATION -->
+              <div class="profile-col">
+                <div class="box">
+                  <div class="box-header">
+                    <span class="icon">⚡</span>
+                    <span>Career Aspiration & Motivation</span>
+                  </div>
+                  <div class="box-subtitle">
+                    Short- to mid-term direction and why the roles matter.
+                  </div>
+                  <div style="font-size:12px;margin-bottom:4px;">
+                    <strong>Career goals (1–3 years):</strong>
+                    <div id="asp-short">—</div>
+                  </div>
+                  <div style="font-size:12px;">
+                    <strong>Motivation for these roles:</strong>
+                    <div id="asp-mid">—</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ROW 4 · SELF-LEADERSHIP & MOBILITY -->
+            <div class="profile-row">
+              <!-- LEFT: SELF-LEADERSHIP -->
+              <div class="profile-col">
+                <div class="box">
+                  <div class="box-header">
+                    <span class="icon">🌱</span>
+                    <span>Optional – Self-leadership</span>
+                  </div>
+                  <div id="profile-selfLeadership" style="font-size:12px;">
+                    —</div>
+                </div>
+              </div>
+
+              <!-- RIGHT: Mobility – Department Change -->
+              <div class="profile-col">
+                <div class="box">
+                  <div class="box-header">
+                    <span class="icon">🚚</span>
+                    <span>Mobility – Department Change</span>
+                  </div>
+                  <dl class="dl-grid">
+                    <div>
+                      <dt>Open to change dept?</dt>
+                      <dd id="mob-change">—</dd>
+                    </div>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Buttons under modal -->
+        <div class="btn-row" style="margin-top:14px;">
+          <button type="button" class="btn btn-secondary" id="backToFormBtn">
+            ⬅ Back to form
+          </button>
+			<button type="button" class="btn btn-primary" id="finalSubmitBtn">
+			  ✅ Confirm & Download PDF + Excel Files
+			</button>
+
+        </div>
+      </div>
     </div>
 
-    <div class="footer">
-      Note: CSV files download to the user’s computer (browsers can’t write into your <code>assets/</code> folder).
+    <!-- SUCCESS MODAL -->
+    <div id="successModal" class="modal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-dialog">
+        <div class="modal-header-row">
+          <div class="modal-title">Next Step – Complete Your Application</div>
+          <button type="button" id="closeSuccessBtn" class="modal-close" aria-label="Close">
+            ×
+          </button>
+        </div>
+        <div class="success-body">
+          <p>✅ Your Candidate Profile files are ready for download.</p>
+		  <p style="font-size:12px;color:#6b7280;margin-top:6px;">
+		    If your browser blocks downloads or asks for permission, please <strong>allow multiple file downloads</strong>, 
+			or click <strong>Download PDF</strong> and then <strong>Download Excel</strong> one by one.
+			  </p>
+			
+<div style="display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 6px;">
+  <button
+    type="button"
+    class="btn btn-secondary btn-orange-soft"
+    id="downloadPdfBtn"
+  >
+    ⬇ Download PDF
+  </button>
+
+  <button
+    type="button"
+    class="btn btn-secondary btn-orange-soft"
+    id="downloadExcelBtn"
+  >
+    ⬇ Download Excel
+  </button>
+</div>
+			
+          <p>Please ensure both files are downloaded before completing the official application form:</p>
+          <p>
+            🔗 <a href="https://forms.office.com/r/E7J5syLsjD" target="_blank" rel="noopener">
+              Microsoft Forms – Talent Uplift Application
+            </a>
+          </p>
+          <p>
+            Or return to the SharePoint portal for full guidelines:<br>
+            🔗 <a href="https://masterashley.sharepoint.com/sites/Talent_Uplift_Program" target="_blank" rel="noopener">
+              Talent Uplift Program – SharePoint Site
+            </a>
+          </p>
+          <p>If you need support, please contact:</p>
+          <ul>
+            <li>Alice Nguyen – <a href="mailto:anguyen@ashleyfurniture.com">anguyen@ashleyfurniture.com</a></li>
+            <li>Linh Tran – <a href="mailto:ltrankhanh@ashleyfurniture.com">ltrankhanh@ashleyfurniture.com</a></li>
+          </ul>
+        </div>
+        <div class="btn-row" style="margin-top:14px;">
+          <button type="button" class="btn btn-primary" id="successOkBtn">
+            Close
+          </button>
+        </div>
+      </div>
     </div>
-  </main>
 
   <script>
-    // ---------- Utility: lightweight CSV parser (handles quoted commas) ----------
-    function parseCSV(str) {
-      const rows = [];
-      let row = [], cell = '', inQuotes = false;
-      for (let i=0; i<str.length; i++) {
-        const c = str[i], n = str[i+1];
-        if (c === '"' ) {
-          if (inQuotes && n === '"') { cell += '"'; i++; }
-          else { inQuotes = !inQuotes; }
-        } else if (c === ',' && !inQuotes) {
-          row.push(cell.trim()); cell = '';
-        } else if ((c === '\n' || c === '\r') && !inQuotes) {
-          if (cell.length || row.length) { row.push(cell.trim()); rows.push(row); row = []; cell=''; }
-        } else {
-          cell += c;
-        }
-      }
-      if (cell.length || row.length) { row.push(cell.trim()); rows.push(row); }
-      // header → objects
-      if (!rows.length) return [];
-      const header = rows[0].map(h => h.toLowerCase().trim());
-      const out = [];
-      for (let i=1; i<rows.length; i++) {
-        const r = rows[i]; if (r.length===1 && r[0]==='') continue;
-        const obj = {};
-        header.forEach((h, j) => obj[h] = (r[j] ?? '').trim());
-        out.push(obj);
-      }
-      return out;
+      function $(id) {
+      return document.getElementById(id);
     }
 
-    // ---------- Paths & image helpers ----------
-    function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
-    function imageFor(row){
-      // Preferred: explicit "image" column (filename or path)
-      let img = (row.image || row.photo || '').trim();
-      if (img) {
-        if (/^https?:\/\//i.test(img) || img.startsWith('assets/')) return img;
-        return 'assets/images/' + img;
-      }
-      // Fallback: assets/images/<slug>.jpg, else pizza.jpg
-      const guess = 'assets/images/' + slugify(row.name || row.item || '') + '.jpg';
-      return guess;
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
-    function priceOf(row){
-      const raw = row.price || row.cost || '';
-      if (!raw) return '';
-      const num = Number(String(raw).replace(/[^0-9.\-]/g,''));
-      if (Number.isFinite(num)) return num.toFixed(num % 1 ? 2 : 0);
-      return raw;
+let toastTimer = null;
+let pulseTimer = null;
+
+
+function showToast(message, type = "success", duration = 2800) {
+  const toast = $("microToast");
+  const text = $("toastText");
+  const icon = $("toastIcon");
+  if (!toast || !text || !icon) return;
+
+  const iconMap = {
+    success: "✅",
+    lock: "🔒",
+    info: "ℹ️",
+    warn: "⚠️",
+    error: "❌"
+  };
+
+  icon.textContent = iconMap[type] || "ℹ️";
+  text.textContent = message;
+
+  toast.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), duration);
+}
+
+function pulseStep2Link(times = 100, durationMs = 1100) {
+  const link = $("msFormLink");
+  if (!link) return;
+
+  // Nếu đang locked thì tuyệt đối không pulse
+  if (link.classList.contains("locked")) return;
+
+  // Clear timer cũ (nếu trước đó đang pulse)
+  if (pulseTimer) clearTimeout(pulseTimer);
+
+  // reset để chạy lại được
+  link.classList.remove("pulse");
+  void link.offsetWidth; // reflow trick
+  link.classList.add("pulse");
+
+  // Sau khi pulse xong -> remove pulse
+  const total = times * durationMs;
+  pulseTimer = setTimeout(() => {
+    link.classList.remove("pulse");
+    pulseTimer = null;
+  }, total + 80);
+}
+
+
+
+function unlockMsFormLink() {
+  const link = $("msFormLink");
+  if (!link) return;
+
+  link.classList.remove("locked");
+  link.classList.add("unlocked");
+  link.setAttribute("aria-disabled", "false");
+  link.removeAttribute("tabindex"); // ✅ cho tab lại
+  link.innerHTML = "✅ Step 2 is now unlocked – please submit your application";
+
+  try { localStorage.setItem(MSFORM_UNLOCK_KEY, "1"); } catch (e) {}
+  pulseStep2Link(100, 1100);
+}
+
+function lockMsFormLink() {
+  const link = $("msFormLink");
+  if (!link) return;
+
+  // ✅ DỪNG NHÁY NGAY LẬP TỨC khi lock
+  link.classList.remove("pulse");
+  if (pulseTimer) {
+    clearTimeout(pulseTimer);
+    pulseTimer = null;
+  }
+
+  link.classList.remove("unlocked");
+  link.classList.add("locked");
+  link.setAttribute("aria-disabled", "true");
+  link.setAttribute("tabindex", "-1");
+  link.innerHTML = "🔒 Step 2 – Open Microsoft Forms Application";
+
+  try { localStorage.removeItem(MSFORM_UNLOCK_KEY); } catch (e) {}
+}
+
+
+    // ===============================
+    // CONFIG · CSV & STORAGE
+    // ===============================
+
+    const STORAGE_KEY = "talent_uplift_candidate_profile_v1";
+	const MSFORM_UNLOCK_KEY = "talent_uplift_msform_unlocked_v1";
+    let departments = [];
+    let targetRoles = [];
+    const rolesMap = {};
+    let lastPayload = null;
+	// ===== Download step state (avoid multiple downloads block) =====
+const DL_STEP_KEY = "talent_uplift_dl_step_v1"; // persist state
+let downloadStep = 0; // 0 = PDF, 1 = Excel, 2 = done
+
+function setFinalBtnLabel() {
+  const btn = $("finalSubmitBtn");
+  if (!btn) return;
+  btn.innerHTML = "✅ Confirm & Download PDF + Excel Files";
+}
+
+
+function persistDownloadStep() {
+  try { localStorage.setItem(DL_STEP_KEY, String(downloadStep)); } catch (e) {}
+}
+
+function restoreDownloadStep() {
+  try {
+    const v = localStorage.getItem(DL_STEP_KEY);
+    const n = v ? parseInt(v, 10) : 0;
+
+    // ✅ chỉ restore tối đa PDF
+    downloadStep = Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0;
+  } catch (e) {
+    downloadStep = 0;
+  }
+  setFinalBtnLabel();
+}
+
+
+function resetDownloadStep() {
+  downloadStep = 0;
+  persistDownloadStep();
+  setFinalBtnLabel();
+}
+
+function setBtnBusy(isBusy) {
+  const btn = $("finalSubmitBtn");
+  if (!btn) return;
+
+  btn.disabled = !!isBusy;
+  btn.style.opacity = isBusy ? "0.75" : "1";
+  btn.style.cursor = isBusy ? "wait" : "pointer";
+}
+
+	let positionsByDept = {}; // { deptName: [position1, position2, ...] }
+
+
+
+
+    // ===============================
+    // LOAD CSV roles_master.csv
+    // ===============================
+
+		async function loadMasterData() {
+		  try {
+		    const res = await fetch("./assets/roles_master.csv");
+		    if (!res.ok) {
+		      console.error("Failed to load roles_master.csv");
+		      return;
+		    }
+		    const text = await res.text();
+		    const lines = text.trim().split(/\r?\n/);
+		    if (lines.length <= 1) return;
+		
+		    const headerRow = lines[0].split(",").map(h => h.trim().toLowerCase());
+		    const idxDept = headerRow.indexOf("department");
+		    const idxPos = headerRow.indexOf("position");
+		    const idxSucc = headerRow.indexOf("succession");
+		
+		    if (idxDept === -1 || idxPos === -1 || idxSucc === -1) {
+		      console.error("CSV headers must include department, position, succession");
+		      return;
+		    }
+		
+		    const deptSet = new Set();
+		    const tempRoles = [];
+		    const posMap = {}; // tạm lưu positions by dept (Set)
+		
+		    for (let i = 1; i < lines.length; i++) {
+		      const line = lines[i].trim();
+		      if (!line) continue;
+		      const cols = line.split(",");
+		      const dept = (cols[idxDept] || "").trim();
+		      const pos = (cols[idxPos] || "").trim();
+		      const succ = (cols[idxSucc] || "").trim().toUpperCase();
+		
+		      if (!dept || !pos) continue;
+		
+		      deptSet.add(dept);
+		
+		      // gom tất cả position cho Current Role / Position
+		      if (!posMap[dept]) posMap[dept] = new Set();
+		      posMap[dept].add(pos);
+		
+		      // chỉ những role succession = TRUE dùng cho Target Role
+		      if (succ === "TRUE") {
+		        const id =
+		          (dept + "__" + pos)
+		            .replace(/\s+/g, "_")
+		            .replace(/[^a-zA-Z0-9_]/g, "");
+		        const roleObj = {
+		          id,
+		          title: pos,
+		          dept,
+		          type: "managerial"
+		        };
+		        tempRoles.push(roleObj);
+		      }
+		    }
+		
+		    departments = Array.from(deptSet).sort();
+		    targetRoles = tempRoles;
+		    targetRoles.forEach(r => {
+		      rolesMap[r.id] = r;
+		    });
+		
+		    // chuyển posMap (Set) -> positionsByDept (Array)
+		    positionsByDept = {};
+		    Object.keys(posMap).forEach(d => {
+		      positionsByDept[d] = Array.from(posMap[d]).sort();
+		    });
+		  } catch (err) {
+		    console.error("Error loading master data:", err);
+		  }
+		}
+
+
+    // ===============================
+    // DOM HELPERS
+    // ===============================
+
+    function getSelectedRole(roleSelectId) {
+      const select = $(roleSelectId);
+      const value = select.value;
+      if (!value) return null;
+      return rolesMap[value] || null;
     }
 
-    // ---------- State ----------
-    let MENU = []; // [{name, price, ...}]
-    const CART = new Map(); // key: itemName → qty (current user before Save)
-    const SUBMISSIONS = []; // [{person, items:[{item, qty, price}], at: Date}]
-
-    // ---------- DOM refs ----------
-    const menuGrid = document.getElementById('menuGrid');
-    const submissionsDiv = document.getElementById('submissions');
-    const itemTotalsDiv = document.getElementById('itemTotals');
-    const personInput = document.getElementById('person');
-    const liveCount = document.getElementById('liveCount');
-    const liveItems = document.getElementById('liveItems');
-    const btnSave = document.getElementById('submitOrder');
-    const btnDlDetailed = document.getElementById('dlDetailed');
-    const btnDlSummary = document.getElementById('dlSummary');
-    const btnReset = document.getElementById('resetAll');
-
-    // ---------- Renderers ----------
-    function renderMenu() {
-      if (!MENU.length) {
-        menuGrid.innerHTML = '<div class="empty">No items found. Check <code>assets/menu.csv</code>.</div>';
-        return;
-      }
-      menuGrid.innerHTML = '';
-      for (const row of MENU) {
-        const name = row.name || row.item || '(Unnamed item)';
-        const price = priceOf(row);
-        const imgSrc = imageFor(row);
-
-        const card = document.createElement('div');
-        card.className = 'card';
-
-        const img = document.createElement('img');
-        img.className = 'thumb';
-        img.src = imgSrc;
-        img.alt = name;
-        img.onerror = () => { img.onerror=null; img.src='assets/images/pizza.jpg'; };
-
-        const body = document.createElement('div');
-        body.className = 'card-body';
-
-        const t = document.createElement('div');
-        t.className = 'title';
-        t.textContent = name;
-
-        const p = document.createElement('div');
-        p.className = 'price';
-        p.textContent = price ? `$${price}` : '';
-
-        const qty = document.createElement('div');
-        qty.className = 'qty';
-
-        const minus = document.createElement('button'); minus.type='button'; minus.textContent='−';
-        const input = document.createElement('input'); input.type='number'; input.min='0'; input.step='1'; input.value = CART.get(name) || 0;
-        const plus = document.createElement('button'); plus.type='button'; plus.textContent='+';
-
-        const setQty = (val) => {
-          const n = Math.max(0, Math.floor(Number(val)||0));
-          input.value = n;
-          if (n>0) CART.set(name, n); else CART.delete(name);
-          updateLiveTotals();
-        };
-        minus.addEventListener('click', () => setQty(Number(input.value)-1));
-        plus.addEventListener('click', () => setQty(Number(input.value)+1));
-        input.addEventListener('input', () => setQty(input.value));
-
-        qty.append(minus, input, plus);
-        body.append(t, p, qty);
-        card.append(img, body);
-        menuGrid.append(card);
+    function setDeptLabel(labelId, role) {
+      const el = $(labelId);
+      if (!el) return;
+      if (!role) {
+        el.innerHTML = 'Department: <em>--</em>';
+      } else {
+        el.innerHTML =
+          "Department: <strong>" +
+          escapeHtml(role.dept) +
+          "</strong> · <span style='font-size:11px;color:#6b7280'>(Managerial)</span>";
       }
     }
 
-    function renderSubmissions() {
-      if (!SUBMISSIONS.length) {
-        submissionsDiv.innerHTML = '<div class="empty">No submissions yet.</div>';
-        return;
-      }
-      let html = '<table><thead><tr><th>Person</th><th>Items</th><th>When</th></tr></thead><tbody>';
-      for (const s of SUBMISSIONS.slice().reverse()) {
-        const itemsTxt = s.items.map(x => `${x.item} ×${x.qty}`).join(', ');
-        html += `<tr><td>${escapeHtml(s.person)}</td><td>${escapeHtml(itemsTxt)}</td><td>${new Date(s.at).toLocaleString()}</td></tr>`;
-      }
-      html += '</tbody></table>';
-      submissionsDiv.innerHTML = html;
+
+    function getRadioValue(name) {
+      const checked = document.querySelector(
+        'input[name="' + name + '"]:checked'
+      );
+      return checked ? checked.value : "";
     }
 
-    function renderItemTotals() {
-      const totals = computeItemTotals();
-      if (!Object.keys(totals).length) {
-        itemTotalsDiv.innerHTML = '<div class="empty">No items yet.</div>';
-        return;
-      }
-      let grand = 0;
-      let html = '<table><thead><tr><th>Item</th><th>Qty</th><th>Total $</th></tr></thead><tbody>';
-      for (const [item, info] of Object.entries(totals)) {
-        const sum = (info.totalPrice ?? 0);
-        grand += sum;
-        html += `<tr><td>${escapeHtml(item)}</td><td>${info.qty}</td><td>$${sum.toFixed(2)}</td></tr>`;
-      }
-      html += `<tr class="totals"><td>Total</td><td></td><td>$${grand.toFixed(2)}</td></tr>`;
-      html += '</tbody></table>';
-      itemTotalsDiv.innerHTML = html;
-    }
+    // ===============================
+    // INIT FORM OPTIONS
+    // ===============================
 
-    function updateLiveTotals(){
-      const people = SUBMISSIONS.length;
-      const items = Object.values(computeItemTotals()).reduce((a,b)=>a+b.qty,0);
-      liveCount.textContent = `👥 ${people} ${people===1?'person':'people'} saved`;
-      liveItems.textContent = `🧾 ${items} total items`;
-    }
-
-    // ---------- Data helpers ----------
-    function computeItemTotals(){
-      const map = {}; // name → {qty, price}
-      for (const s of SUBMISSIONS) {
-        for (const it of s.items) {
-          if (!map[it.item]) map[it.item] = { qty:0, price: it.price ?? null };
-          map[it.item].qty += it.qty;
-          if (it.price != null) map[it.item].price = it.price;
-        }
-      }
-      // compute totals
-      for (const [k,v] of Object.entries(map)) {
-        const price = Number(v.price ?? 0);
-        v.totalPrice = price ? (v.qty * price) : 0;
-      }
-      return map;
-    }
-
-    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
-
-    function toCSV(rows){
-      const quote = v => {
-        const s = String(v ?? '');
-        return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
-      };
-      return rows.map(r => r.map(quote).join(',')).join('\n');
-    }
-
-    function downloadCSV(filename, rows){
-      const csv = toCSV(rows);
-      const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = filename;
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(a.href);
-    }
-
-    // ---------- Events ----------
-    btnSave.addEventListener('click', () => {
-      const person = personInput.value.trim();
-      if (!person) { alert('Please enter your name.'); return; }
-      if (CART.size === 0) { alert('Please choose at least one item (qty > 0).'); return; }
-      // build items list from CART based on MENU pricing
-      const priceMap = new Map(MENU.map(r => [ (r.name||r.item||'').trim(), Number(priceOf(r) || 0) ]));
-      const items = [];
-      CART.forEach((qty, itemName) => {
-        if (qty>0) items.push({ item:itemName, qty, price: priceMap.get(itemName) || null });
+    function initDepartments() {
+      const deptSelect = $("currentDept");
+      deptSelect.innerHTML = '<option value="">-- Select department --</option>';
+      departments.forEach((dept) => {
+        const opt = document.createElement("option");
+        opt.value = dept;
+        opt.textContent = dept;
+        deptSelect.appendChild(opt);
       });
-      SUBMISSIONS.push({ person, items, at: new Date().toISOString() });
-      // clear cart for next person
-      CART.clear();
-      personInput.value = '';
-      renderMenu();
-      renderSubmissions();
-      renderItemTotals();
-      updateLiveTotals();
-    });
-
-    btnDlDetailed.addEventListener('click', () => {
-      if (!SUBMISSIONS.length) { alert('No submissions to export.'); return; }
-      const rows = [['person','item','qty','price','timestamp']];
-      for (const s of SUBMISSIONS) {
-        for (const it of s.items) {
-          rows.push([s.person, it.item, it.qty, it.price ?? '', s.at]);
-        }
-      }
-      downloadCSV(`orders_detailed_${dateStamp()}.csv`, rows);
-    });
-
-    btnDlSummary.addEventListener('click', () => {
-      const totals = computeItemTotals();
-      const names = Object.keys(totals);
-      if (!names.length){ alert('No items to summarize.'); return; }
-      const rows = [['item','total_qty','unit_price','total_amount']];
-      for (const name of names) {
-        const t = totals[name];
-        rows.push([name, t.qty, (t.price ?? ''), (t.totalPrice ?? 0).toFixed(2)]);
-      }
-      downloadCSV(`orders_summary_${dateStamp()}.csv`, rows);
-    });
-
-    btnReset.addEventListener('click', () => {
-      if (!confirm('Clear all in-page data (cart + submissions)?')) return;
-      CART.clear(); SUBMISSIONS.length = 0; personInput.value = '';
-      renderMenu(); renderSubmissions(); renderItemTotals(); updateLiveTotals();
-    });
-
-    function dateStamp(){
-      const d = new Date();
-      const pad = n => String(n).padStart(2,'0');
-      return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`;
     }
 
-    // ---------- Boot ----------
-    (async function init(){
-      try {
-        const res = await fetch('assets/menu.csv', { cache: 'no-store' });
-        if (!res.ok) throw new Error('Failed to load assets/menu.csv');
-        const text = await res.text();
-        const rows = parseCSV(text);
+    function initRoles() {
+      const pref1 = $("pref1Role");
+      const pref2 = $("pref2Role");
 
-        // Normalize expected columns
-        // Expect at least: name (or item). Optional: price, category, image.
-        // Example header: name,price,image
-        MENU = rows.map(r => {
-          const obj = Object.assign({}, r);
-          // Normalize key casing fallback already handled by parser; just ensure "name"
-          obj.name = r.name || r.item || '';
-          return obj;
-        }).filter(r => r.name);
+      pref1.innerHTML = '<option value="">-- Select role --</option>';
+      pref2.innerHTML = '<option value="">-- No secondary preference --</option>';
 
-        renderMenu();
-        renderSubmissions();
-        renderItemTotals();
-        updateLiveTotals();
-      } catch (e) {
-        console.error(e);
-        menuGrid.innerHTML = '<div class="panel">Could not load <code>assets/menu.csv</code>. Check the file path and that you’re running this page via a local server (not from a file:// URL).</div>';
+      targetRoles.forEach((role) => {
+        const text = role.dept + " – " + role.title;
+
+        const opt1 = document.createElement("option");
+        opt1.value = role.id;
+        opt1.textContent = text;
+        pref1.appendChild(opt1);
+
+        const opt2 = document.createElement("option");
+        opt2.value = role.id;
+        opt2.textContent = text;
+        pref2.appendChild(opt2);
+      });
+    }
+	
+	function refreshCurrentRoleOptions() {
+	  const dept = $("currentDept").value;
+	  const roleSelect = $("currentRole");
+	  roleSelect.innerHTML = "";
+	
+	  const placeholder = document.createElement("option");
+	  placeholder.value = "";
+	  placeholder.textContent = dept
+	    ? "-- Select role / position --"
+	    : "-- Select department first --";
+	  roleSelect.appendChild(placeholder);
+	
+	  if (!dept) return;
+	
+	  const list = positionsByDept[dept] || [];
+	  list.forEach(pos => {
+	    const opt = document.createElement("option");
+	    opt.value = pos;
+	    opt.textContent = pos;
+	    roleSelect.appendChild(opt);
+	  });
+	}
+
+
+    function updateRoleDependentUI() {
+      const currentDept = $("currentDept").value;
+      const pref1Role = getSelectedRole("pref1Role");
+      const pref2Role = getSelectedRole("pref2Role");
+
+      // update dept labels
+      setDeptLabel("pref1DeptLabel", pref1Role);
+      setDeptLabel("pref2DeptLabel", pref2Role);
+
+      // Preference 2 reason required only if Pref2 selected
+      $("pref2Reason").required = !!pref2Role;
+	  if (!pref2Role) $("pref2Reason").value = "";
+
+
+      // Cross-dept block logic
+      let anyCrossDept = false;
+      if (currentDept && pref1Role && pref1Role.dept !== currentDept) {
+        anyCrossDept = true;
       }
-    })();
+      if (currentDept && pref2Role && pref2Role.dept !== currentDept) {
+        anyCrossDept = true;
+      }
+
+const crossBlock = $("crossDeptBlock");
+
+if (anyCrossDept) {
+  crossBlock.style.display = "block";
+  $("crossJustification").required = true;
+} else {
+  crossBlock.style.display = "none";
+  $("crossJustification").required = false;
+  $("crossJustification").value = "";
+}
+
+    }
+
+    // ===============================
+    // ERROR HANDLING
+    // ===============================
+
+    function clearAllErrors() {
+      document.querySelectorAll(".field-error").forEach((el) => {
+        el.textContent = "";
+      });
+      document
+        .querySelectorAll(".has-error")
+        .forEach((el) => el.classList.remove("has-error"));
+    }
+
+    function setError(fieldId, message) {
+      const field = $(fieldId);
+      const errEl = $("err-" + fieldId) || (field && field.nextElementSibling);
+      if (errEl) errEl.textContent = message;
+      if (field) field.classList.add("has-error");
+    }
+
+    function scrollToFirstError() {
+      const firstErrorField = document.querySelector(".has-error");
+      if (firstErrorField) {
+        const rect = firstErrorField.getBoundingClientRect();
+        const offset = window.scrollY + rect.top - 80;
+        window.scrollTo({ top: offset, behavior: "smooth" });
+        try {
+          firstErrorField.focus({ preventScroll: true });
+        } catch (e) {}
+      }
+    }
+
+    // ===============================
+    // LOAD SAMPLE DATA BUTTON
+    // ===============================
+
+function findRoleIdByTitle(title) {
+  const target = title.trim().toLowerCase();
+  // match chính xác
+  let role = targetRoles.find(r => r.title.trim().toLowerCase() === target);
+  // nếu không thấy thì match chứa chuỗi
+  if (!role) {
+    role = targetRoles.find(r =>
+      r.title.trim().toLowerCase().includes(target)
+    );
+  }
+  return role ? role.id : "";
+}
+
+
+    function loadSampleData() {
+      clearAllErrors();
+
+      // BASIC INFO
+		$("fullName").value = "Nguyen Van A";
+		$("employeeId").value = "0123";
+		$("workEmail").value = "nguyen.van.a@ashleyfurniture.com";
+		$("currentDept").value = "Engineering";
+		refreshCurrentRoleOptions();
+		$("currentRole").value = "Process Engineer";
+      // PREFERENCES
+      $("pref1Role").value = findRoleIdByTitle("Engineering Project Manager");
+      $("pref1Reason").value =
+        "I aim to grow into a project leadership role where I can coordinate cross-functional work, manage timelines, and deliver impactful engineering outcomes for both factory and commercial teams.";
+
+      $("pref2Role").value = findRoleIdByTitle("Team Leader of Solutions Development");
+      $("pref2Reason").value =
+        "I am also interested in Strategy Execution because it connects data, projects and business priorities. This role would allow me to work across departments and drive initiatives that improve execution discipline.";
+
+      $("crossJustification").value =
+        "My current role in Engineering already requires frequent collaboration with Strategy Execution on project timelines, risk tracking and improvement initiatives, so I have relevant exposure and interest in this area.";
+
+      // ROLE-SPECIFIC
+      $("leadershipStyle").value =
+        "I try to lead with clarity, trust and support. I focus on setting clear expectations, giving regular feedback, and creating space for team members to share ideas and take ownership of their tasks.";
+      $("sbiSituation").value =
+        "Our project team was facing delays due to conflicting priorities and unclear handover between functions.";
+      $("sbiBehavior").value =
+        "I organised a short alignment session, clarified milestones, reassigned some tasks based on strengths, and set up weekly check-ins to track risk and support team members.";
+      $("sbiImpact").value =
+        "The team caught up on the timeline, reported higher clarity and confidence, and stakeholders recognised the team for the improved coordination.";
+
+      // CAREER & MOTIVATION
+      $("careerGoals").value =
+        "In the next 1–3 years, I want to strengthen my project management capability, cross-functional collaboration and leadership skills so that I can handle larger regional projects and lead a small team.";
+      $("motivation").value =
+        "I want to be considered for these roles because I believe I can contribute more by coordinating people, processes and data, not only by doing individual engineering tasks. I am committed to long-term development with Ashley and ready to invest effort to grow into these roles.";
+
+      // MOBILITY
+      document
+        .querySelectorAll('input[name="changeDept"]')
+        .forEach((x) => (x.checked = false));
+      document.querySelector(
+        'input[name="changeDept"][value="maybe"]'
+      ).checked = true;
+
+      // OPTIONAL SELF-LEADERSHIP
+      $("selfLeadership").value =
+        "I created a 3-month self-learning plan on data visualisation, studied after working hours, and then built dashboards that help my manager track defect trends and make faster decisions.";
+
+      // CONSENTS
+      $("consentDevelopment").checked = true;
+      $("consentSharing").checked = true;
+      $("consentAccuracy").checked = true;
+
+      updateRoleDependentUI();
+      saveFormToLocalStorage();
+    }
+
+    // ===============================
+    // VALIDATION
+    // ===============================
+
+    function validateForm() {
+      clearAllErrors();
+      let hasError = false;
+
+      const fullName = $("fullName").value.trim();
+      const employeeId = $("employeeId").value.trim();
+      const workEmail = $("workEmail").value.trim();
+      const currentDept = $("currentDept").value;
+      const currentRole = $("currentRole").value.trim();
+
+      if (!fullName) {
+        setError("fullName", "Please enter your Full Name.");
+        hasError = true;
+      }
+
+      const numericEmpId = employeeId.replace(/\D/g, "");
+      if (!numericEmpId) {
+        setError("employeeId", "Please enter your Employee ID (4 digits).");
+        hasError = true;
+      } else if (numericEmpId.length !== 4) {
+        setError(
+          "employeeId",
+          "Employee ID must be 4 digits. The system will auto-format if needed."
+        );
+        hasError = true;
+      }
+
+      if (!workEmail) {
+        setError("workEmail", "Please enter your Work Email.");
+        hasError = true;
+      } else {
+        const emailPattern = /^[^\s@]+@ashleyfurniture\.com$/i;
+        if (!emailPattern.test(workEmail)) {
+          setError(
+            "workEmail",
+            "Please use your work email with '@ashleyfurniture.com'."
+          );
+          hasError = true;
+        }
+      }
+
+      if (!currentDept) {
+        setError("currentDept", "Please select your current Department.");
+        hasError = true;
+      }
+      if (!currentRole) {
+        setError("currentRole", "Please select your Current Role / Position.");
+        hasError = true;
+      }
+
+      const pref1Role = getSelectedRole("pref1Role");
+      const pref2Role = getSelectedRole("pref2Role");
+
+      if (!pref1Role) {
+        setError("pref1Role", "Please select your Preference 1 role.");
+        hasError = true;
+      }
+
+      const pref1Reason = $("pref1Reason").value.trim();
+      if (!pref1Reason || pref1Reason.length < 30) {
+        setError(
+          "pref1Reason",
+          "Please provide a meaningful reason for Preference 1 (at least 2–3 lines)."
+        );
+        hasError = true;
+      }
+
+      const pref2Reason = $("pref2Reason").value.trim();
+      if (pref2Role && (!pref2Reason || pref2Reason.length < 30)) {
+        setError(
+          "pref2Reason",
+          "Please provide a meaningful reason for Preference 2 (at least 2–3 lines)."
+        );
+        hasError = true;
+      }
+
+      // Preference 2 must be different
+      if (pref1Role && pref2Role && pref1Role.id === pref2Role.id) {
+        setError(
+          "pref2Role",
+          "Preference 2 must be different from Preference 1."
+        );
+        hasError = true;
+      }
+
+      // At least 1 preference must be within current department
+      if (currentDept && pref1Role) {
+        const pref1InDept = pref1Role.dept === currentDept;
+        const pref2InDept = pref2Role && pref2Role.dept === currentDept;
+        if (!pref1InDept && !pref2InDept) {
+          setError(
+            "pref1Role",
+            "At least one of your preferences must be within your current department."
+          );
+          setError(
+            "pref2Role",
+            "At least one of your preferences must be within your current department."
+          );
+          hasError = true;
+        }
+      }
+
+      // Cross-dept justification if needed
+      const crossBlockVisible =
+        $("crossDeptBlock").style.display !== "none";
+      if (crossBlockVisible) {
+        const crossText = $("crossJustification").value.trim();
+        if (!crossText || crossText.length < 20) {
+          setError(
+            "crossJustification",
+            "Please explain your reasoning for applying to a role in another department."
+          );
+          hasError = true;
+        }
+      }
+
+      // Leadership & SBI
+      const leadershipStyle = $("leadershipStyle").value.trim();
+      if (!leadershipStyle || leadershipStyle.length < 30) {
+        setError(
+          "leadershipStyle",
+          "Please describe your future leadership style (at least a few lines)."
+        );
+        hasError = true;
+      }
+
+      const s = $("sbiSituation").value.trim();
+      const b = $("sbiBehavior").value.trim();
+      const i = $("sbiImpact").value.trim();
+      if (!s || s.length < 20) {
+        setError(
+          "sbiSituation",
+          "Please describe the situation (at least a few lines)."
+        );
+        hasError = true;
+      }
+      if (!b || b.length < 20) {
+        setError(
+          "sbiBehavior",
+          "Please describe your actions (Behavior) in this example."
+        );
+        hasError = true;
+      }
+      if (!i || i.length < 20) {
+        setError(
+          "sbiImpact",
+          "Please describe the impact and result of your actions."
+        );
+        hasError = true;
+      }
+
+      // Career & motivation
+      const careerGoals = $("careerGoals").value.trim();
+      const motivation = $("motivation").value.trim();
+
+      if (!careerGoals || careerGoals.length < 30) {
+        setError(
+          "careerGoals",
+          "Please describe your short- to mid-term career goals (at least a few lines)."
+        );
+        hasError = true;
+      }
+      if (!motivation || motivation.length < 30) {
+        setError(
+          "motivation",
+          "Please explain why you want to be considered for these role(s) (at least a few lines)."
+        );
+        hasError = true;
+      }
+
+      // Mobility
+const changeDept = getRadioValue("changeDept");
+if (!changeDept) {
+  $("err-changeDept").textContent =
+    "Please indicate your willingness to change department.";
+  $("changeDeptWrap").classList.add("has-error");
+  hasError = true;
+} else {
+  $("err-changeDept").textContent = "";
+  $("changeDeptWrap").classList.remove("has-error");
+}
+
+      // Consents
+      let consErr = "";
+      if (!$("consentDevelopment").checked) {
+        consErr =
+          "Please confirm your understanding about development vs promotion.";
+      }
+      if (!$("consentSharing").checked) {
+        consErr =
+          (consErr ? consErr + " " : "") +
+          "Please confirm your understanding that your profile may be shared with relevant stakeholders.";
+      }
+      if (!$("consentAccuracy").checked) {
+        consErr =
+          (consErr ? consErr + " " : "") +
+          "Please confirm that your information is accurate to the best of your knowledge.";
+      }
+      if (consErr) {
+        $("err-consents").textContent = consErr;
+        hasError = true;
+      }
+
+      return !hasError;
+    }
+
+    // ===============================
+    // BUILD PAYLOAD FROM FORM
+    // ===============================
+
+    function buildPayloadFromForm() {
+      const pref1Role = getSelectedRole("pref1Role");
+      const pref2Role = getSelectedRole("pref2Role");
+
+      const payload = {
+        meta: {
+          submittedAt: new Date().toISOString()
+        },
+        candidate: {
+          fullName: $("fullName").value.trim(),
+          employeeId: $("employeeId").value.trim(),
+          workEmail: $("workEmail").value.trim(),
+          currentDept: $("currentDept").value,
+          currentRole: $("currentRole").value.trim()
+        },
+        preferences: {
+          preference1: pref1Role
+            ? {
+                roleId: pref1Role.id,
+                roleTitle: pref1Role.title,
+                department: pref1Role.dept,
+                type: pref1Role.type,
+                reason: $("pref1Reason").value.trim()
+              }
+            : null,
+          preference2: pref2Role
+            ? {
+                roleId: pref2Role.id,
+                roleTitle: pref2Role.title,
+                department: pref2Role.dept,
+                type: pref2Role.type,
+                reason: $("pref2Reason").value.trim()
+              }
+            : null,
+          crossDepartmentJustification:
+            $("crossJustification").value.trim() || null
+        },
+        roleSpecific: {
+          leadershipStyle: $("leadershipStyle").value.trim(),
+          sbiSituation: $("sbiSituation").value.trim(),
+          sbiBehavior: $("sbiBehavior").value.trim(),
+          sbiImpact: $("sbiImpact").value.trim()
+        },
+        careerAndMobility: {
+          careerGoals: $("careerGoals").value.trim(),
+          motivation: $("motivation").value.trim(),
+          willingChangeDept: getRadioValue("changeDept"),
+          selfLeadershipExample:
+            $("selfLeadership").value.trim() || null
+        },
+
+        consents: {
+          developmentVsPromotion: $("consentDevelopment").checked,
+          sharingWithHoDsAndHR: $("consentSharing").checked,
+          accuracyConfirmed: $("consentAccuracy").checked
+        }
+      };
+
+      return payload;
+    }
+
+function showJsonPreview(payload) {
+  const el = $("jsonOutput");
+  if (!el) return;
+  el.textContent = JSON.stringify(payload, null, 2);
+}
+
+    // ===============================
+    // PROFILE CARD POPULATION
+    // ===============================
+
+    function humanizeChangeDept(val) {
+      if (val === "yes") return "Yes";
+      if (val === "maybe") return "Maybe / depends on role";
+      if (val === "no") return "No";
+      return "—";
+    }
+
+    function fillProfileCard(payload) {
+      // header ID
+		$("pdfTagEmployeeId").textContent =
+		  "ID: " + (payload.candidate.employeeId || "—");
+
+
+      // Basic info
+      $("bi-name").innerText = payload.candidate.fullName || "—";
+      $("bi-dept").innerText = payload.candidate.currentDept || "—";
+      $("bi-role").innerText = payload.candidate.currentRole || "—";
+
+      // Preferences
+      const p1 = payload.preferences.preference1;
+      const p2 = payload.preferences.preference2;
+
+      if (p1) {
+        $("pref1").innerHTML =
+          escapeHtml(p1.roleTitle) +
+          ' <span class="dept-tag">(' +
+          escapeHtml(p1.department) +
+          ")</span>";
+      } else {
+        $("pref1").innerText = "—";
+      }
+
+      if (p2) {
+        $("pref2").innerHTML =
+          escapeHtml(p2.roleTitle) +
+          ' <span class="dept-tag">(' +
+          escapeHtml(p2.department) +
+          ")</span>";
+      } else {
+        $("pref2").innerText = "—";
+      }
+
+      // Cross-dept badge for 2nd preference
+const currentDept = payload.candidate.currentDept;
+const anyCross =
+  (p1 && currentDept && p1.department !== currentDept) ||
+  (p2 && currentDept && p2.department !== currentDept);
+
+$("crossNotice").style.display = anyCross ? "inline-block" : "none";
+
+
+      // Reasons
+      $("rs1").innerText = (p1 && p1.reason) || "—";
+      $("rs2").innerText = (p2 && p2.reason) || "—";
+
+      // Mobility
+      $("mob-change").innerText = humanizeChangeDept(
+        payload.careerAndMobility.willingChangeDept
+      );
+
+      // Aspiration
+      $("asp-short").innerText =
+        payload.careerAndMobility.careerGoals || "—";
+      $("asp-mid").innerText =
+        payload.careerAndMobility.motivation || "—";
+
+      // Leadership & SBI
+      $("profile-leadershipStyle").innerText =
+        payload.roleSpecific.leadershipStyle || "—";
+      $("profile-sbiS").innerText =
+        payload.roleSpecific.sbiSituation || "—";
+      $("profile-sbiB").innerText =
+        payload.roleSpecific.sbiBehavior || "—";
+      $("profile-sbiI").innerText =
+        payload.roleSpecific.sbiImpact || "—";
+
+      // Optional self-leadership
+      $("profile-selfLeadership").innerText =
+        payload.careerAndMobility.selfLeadershipExample || "—";
+    }
+
+    // ===============================
+    // FILE NAMING
+    // ===============================
+
+    function getFileBaseName(payload) {
+      const rawId = payload.candidate.employeeId || "candidate";
+      const safeId = rawId.replace(/[^a-zA-Z0-9_-]/g, "_");
+      const dt = new Date();
+      const yyyy = dt.getFullYear();
+      const mm = String(dt.getMonth() + 1).padStart(2, "0");
+      const dd = String(dt.getDate()).padStart(2, "0");
+      return `candidate_profile_${safeId}_${yyyy}${mm}${dd}`;
+    }
+
+    // ===============================
+    // EXCEL & PDF DOWNLOAD
+    // ===============================
+
+    function downloadExcel(payload) {
+      const baseName = getFileBaseName(payload);
+
+      const p1 = payload.preferences.preference1 || {};
+      const p2 = payload.preferences.preference2 || {};
+
+      const data = [
+        [
+          "Full Name",
+          "Employee ID",
+          "Work Email",
+          "Current Department",
+          "Current Role",
+          "Pref1 Role Title",
+          "Pref1 Department",
+          "Pref1 Reason",
+          "Pref2 Role Title",
+          "Pref2 Department",
+          "Pref2 Reason",
+          "Cross-dept Justification",
+          "Leadership Style",
+          "SBI – Situation",
+          "SBI – Behavior",
+          "SBI – Impact",
+          "Career Goals (1–3 years)",
+          "Motivation for Roles",
+          "Willingness to Change Dept",
+          "Self-leadership Example",
+          "Submitted At"
+        ],
+        [
+          payload.candidate.fullName || "",
+          payload.candidate.employeeId || "",
+          payload.candidate.workEmail || "",
+          payload.candidate.currentDept || "",
+          payload.candidate.currentRole || "",
+          p1.roleTitle || "",
+          p1.department || "",
+          p1.reason || "",
+          p2.roleTitle || "",
+          p2.department || "",
+          p2.reason || "",
+          payload.preferences.crossDepartmentJustification || "",
+          payload.roleSpecific.leadershipStyle || "",
+          payload.roleSpecific.sbiSituation || "",
+          payload.roleSpecific.sbiBehavior || "",
+          payload.roleSpecific.sbiImpact || "",
+          payload.careerAndMobility.careerGoals || "",
+          payload.careerAndMobility.motivation || "",
+          humanizeChangeDept(payload.careerAndMobility.willingChangeDept),
+          payload.careerAndMobility.selfLeadershipExample || "",
+          payload.meta.submittedAt || ""
+        ]
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Candidate_Profile");
+      XLSX.writeFile(wb, baseName + ".xlsx");
+    }
+
+    function downloadProfilePdf(payload) {
+      const baseName = getFileBaseName(payload);
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: baseName + ".pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          scrollY: 0
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait"
+        }
+      };
+
+      const element = document.getElementById("pdfWrapper");
+
+      html2pdf()
+        .set(opt)
+        .from(element)
+        .save();
+    }
+
+    // ===============================
+    // LOCAL STORAGE
+    // ===============================
+
+    function saveFormToLocalStorage() {
+      const data = {
+        fullName: $("fullName").value,
+        employeeId: $("employeeId").value,
+        workEmail: $("workEmail").value,
+        currentDept: $("currentDept").value,
+        currentRole: $("currentRole").value,
+        pref1Role: $("pref1Role").value,
+        pref1Reason: $("pref1Reason").value,
+        pref2Role: $("pref2Role").value,
+        pref2Reason: $("pref2Reason").value,
+        crossJustification: $("crossJustification").value,
+        leadershipStyle: $("leadershipStyle").value,
+        sbiSituation: $("sbiSituation").value,
+        sbiBehavior: $("sbiBehavior").value,
+        sbiImpact: $("sbiImpact").value,
+        careerGoals: $("careerGoals").value,
+        motivation: $("motivation").value,
+        selfLeadership: $("selfLeadership").value,
+        changeDept: getRadioValue("changeDept"),
+        consentDevelopment: $("consentDevelopment").checked,
+        consentSharing: $("consentSharing").checked,
+        consentAccuracy: $("consentAccuracy").checked
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.warn("LocalStorage save error:", e);
+      }
+    }
+
+    function restoreFormFromLocalStorage() {
+      let raw = null;
+      try {
+        raw = localStorage.getItem(STORAGE_KEY);
+      } catch (e) {
+        console.warn("LocalStorage read error:", e);
+      }
+      if (!raw) return;
+      let data;
+      try {
+        data = JSON.parse(raw);
+      } catch (e) {
+        return;
+      }
+      if (!data) return;
+
+      $("fullName").value = data.fullName || "";
+	  $("employeeId").value = data.employeeId || "";
+	  $("workEmail").value = data.workEmail || "";
+	  $("currentDept").value = data.currentDept || "";
+	  refreshCurrentRoleOptions();
+	  $("currentRole").value = data.currentRole || "";
+      $("pref1Role").value = data.pref1Role || "";
+      $("pref1Reason").value = data.pref1Reason || "";
+      $("pref2Role").value = data.pref2Role || "";
+      $("pref2Reason").value = data.pref2Reason || "";
+      $("crossJustification").value = data.crossJustification || "";
+      $("leadershipStyle").value = data.leadershipStyle || "";
+      $("sbiSituation").value = data.sbiSituation || "";
+      $("sbiBehavior").value = data.sbiBehavior || "";
+      $("sbiImpact").value = data.sbiImpact || "";
+      $("careerGoals").value = data.careerGoals || "";
+      $("motivation").value = data.motivation || "";
+      $("selfLeadership").value = data.selfLeadership || "";
+
+      // Radio changeDept
+      document
+        .querySelectorAll('input[name="changeDept"]')
+        .forEach((el) => {
+          el.checked = (el.value === data.changeDept);
+        });
+
+      $("consentDevelopment").checked = !!data.consentDevelopment;
+      $("consentSharing").checked = !!data.consentSharing;
+      $("consentAccuracy").checked = !!data.consentAccuracy;
+
+      updateRoleDependentUI();
+    }
+
+    function clearLocalStorageData() {
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch (e) {
+        console.warn("LocalStorage clear error:", e);
+      }
+    }
+
+    // ===============================
+    // MAIN INIT
+    // ===============================
+
+    document.addEventListener("DOMContentLoaded", async function () {
+      // Load CSV-based data
+      await loadMasterData();
+	  initDepartments();
+	  initRoles();
+	  refreshCurrentRoleOptions();
+	  restoreFormFromLocalStorage();
+	  updateRoleDependentUI();
+	  restoreDownloadStep();
+
+	  
+	  // ✅ CHÈN ĐOẠN “CLICK LOGO LOAD SAMPLE” NGAY Ở ĐÂY
+const secretLogo = $("secretSampleLogo");
+if (secretLogo) {
+  let clickCount = 0;
+  let clickTimer = null;
+
+  const RESET_MS = 900; // mỗi click phải cách nhau <= 900ms
+
+  secretLogo.addEventListener("click", function () {
+    clickCount++;
+
+    // reset timer mỗi lần click
+    if (clickTimer) clearTimeout(clickTimer);
+    clickTimer = setTimeout(() => {
+      clickCount = 0;
+      clickTimer = null;
+    }, RESET_MS);
+
+    // đủ 5 click trong thời gian yêu cầu -> load sample
+    if (clickCount === 5) {
+      clickCount = 0;
+      if (clickTimer) clearTimeout(clickTimer);
+      clickTimer = null;
+
+      loadSampleData();
+      // không show toast / không hint
+    }
+  });
+}
+
+  try {
+    if (localStorage.getItem(MSFORM_UNLOCK_KEY) === "1") unlockMsFormLink();
+    else lockMsFormLink();
+  } catch (e) {
+    lockMsFormLink();
+  }
+
+      // Auto-format Employee ID (digits only, pad to 4 on blur)
+      $("employeeId").addEventListener("input", function () {
+        this.value = this.value.replace(/\D/g, "");
+        saveFormToLocalStorage();
+      });
+      $("employeeId").addEventListener("blur", function () {
+        let v = this.value.replace(/\D/g, "");
+        if (!v) return;
+        if (v.length > 4) v = v.slice(-4);
+        this.value = v.padStart(4, "0");
+        saveFormToLocalStorage();
+      });
+
+      // change/blur listeners to update UI & inline validation
+		$("currentDept").addEventListener("change", function () {
+		  refreshCurrentRoleOptions();
+		  updateRoleDependentUI();
+		  saveFormToLocalStorage();
+		});
+		
+		$("currentRole").addEventListener("focus", function () {
+		  if (!$("currentDept").value) {
+		    alert("Please select your Current Department first.");
+		    $("currentDept").focus();
+		  }
+		});
+		$("currentRole").addEventListener("change", function () {
+  saveFormToLocalStorage();
+});
+
+
+		
+      $("pref1Role").addEventListener("change", function () {
+        updateRoleDependentUI();
+        saveFormToLocalStorage();
+      });
+      $("pref2Role").addEventListener("change", function () {
+        updateRoleDependentUI();
+        saveFormToLocalStorage();
+      });
+
+      const validateOnBlurIds = [
+        "fullName",
+        "employeeId",
+        "workEmail",
+        "currentRole",
+        "pref1Reason",
+        "pref2Reason",
+        "crossJustification",
+        "leadershipStyle",
+        "sbiSituation",
+        "sbiBehavior",
+        "sbiImpact",
+        "careerGoals",
+        "motivation"
+      ];
+      validateOnBlurIds.forEach((id) => {
+        const el = $(id);
+        if (el) {
+          el.addEventListener("blur", () => {
+            validateForm();
+            saveFormToLocalStorage();
+          });
+        }
+      });
+
+      // Form-wide input/change for saving
+      $("applicationForm").addEventListener("input", saveFormToLocalStorage);
+      $("applicationForm").addEventListener("change", saveFormToLocalStorage);
+
+      // Form submit
+      $("applicationForm").addEventListener("submit", function (e) {
+        e.preventDefault();
+        const valid = validateForm();
+
+        if (valid) {
+          const payload = buildPayloadFromForm();
+          lastPayload = payload;
+
+          showJsonPreview(payload);
+          fillProfileCard(payload);
+
+          $("successMessage").style.display = "block";
+
+          // open modal
+          $("profileModal").classList.add("show");
+		  resetDownloadStep(); // NEW: always start from PDF when opening preview
+        } else {
+          $("successMessage").style.display = "none";
+          scrollToFirstError();
+        }
+      });
+
+      // Reset
+      $("btnReset").addEventListener("click", function () {
+        clearAllErrors();
+        $("jsonOutput").textContent = "Waiting for submission…";
+        $("successMessage").style.display = "none";
+        lastPayload = null;
+        clearLocalStorageData();
+		$("applicationForm").reset();
+refreshCurrentRoleOptions();
+updateRoleDependentUI();
+        setTimeout(updateRoleDependentUI, 10);
+		 resetDownloadStep();
+		lockMsFormLink();
+showToast("Step 2 link is locked again. Generate & download to unlock.", "lock", 2400);
+      });
+
+      // Modal controls
+$("closeModalBtn").addEventListener("click", function () {
+  $("profileModal").classList.remove("show");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+$("closeSuccessBtn").addEventListener("click", function () {
+  $("successModal").classList.remove("show");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+$("successOkBtn").addEventListener("click", function () {
+  $("successModal").classList.remove("show");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+// Re-download buttons inside Success Modal
+$("downloadPdfBtn")?.addEventListener("click", function () {
+  if (!lastPayload) return;
+
+  downloadProfilePdf(lastPayload);
+
+  if (downloadStep < 1) {
+    downloadStep = 1;
+    persistDownloadStep();
+    setFinalBtnLabel();
+  }
+});
+
+
+$("downloadExcelBtn")?.addEventListener("click", function () {
+  if (!lastPayload) return;
+
+  downloadExcel(lastPayload);
+
+  downloadStep = 2;
+  persistDownloadStep();
+  setFinalBtnLabel();
+});
+
+
+
+$("finalSubmitBtn").addEventListener("click", function () {
+  if (!lastPayload) {
+    alert("Please generate the Candidate Profile first.");
+    return;
+  }
+
+  // prevent double-click while generating/download starting
+  setBtnBusy(true);
+
+  const finalPayload = lastPayload;
+  showJsonPreview(finalPayload);
+
+// Step 0: Auto-download PDF, then attempt Excel
+if (downloadStep === 0) {
+  try {
+    // 1️⃣ PDF luôn tải trước
+    downloadProfilePdf(finalPayload);
+    downloadStep = 1;
+    persistDownloadStep();
+    setFinalBtnLabel();
+
+    showToast("PDF download started. Preparing Excel file...", "info", 2200);
+
+    // 2️⃣ Delay nhẹ rồi mới trigger Excel
+setTimeout(() => {
+  try {
+    downloadExcel(finalPayload); // Excel may be blocked
+  } catch (e) {
+    console.warn("Excel auto-download may be blocked");
+  } finally {
+    // ❗ KHÔNG set downloadStep = 2 ở đây
+    unlockMsFormLink();
+    $("successModal").classList.add("show");
+  }
+}, 650);
+
+
+  } finally {
+    setTimeout(() => setBtnBusy(false), 700);
+  }
+  return;
+}
+
+
+  // Step 2: Already done
+  setBtnBusy(false);
+  $("successModal").classList.add("show");
+
+});
+
+	
+	// Close modal when clicking backdrop
+document.querySelectorAll(".modal-backdrop").forEach((b) => {
+  b.addEventListener("click", () => {
+    const wasProfileOpen = $("profileModal").classList.contains("show");
+    const wasSuccessOpen = $("successModal").classList.contains("show");
+
+    $("profileModal").classList.remove("show");
+    $("successModal").classList.remove("show");
+
+    // nếu đóng modal kiểu "back to form" (click ra ngoài) -> cuộn lên đầu
+    if (wasProfileOpen || wasSuccessOpen) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+});
+
+
+// Close modal on ESC key (and scroll to top)
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    const wasProfileOpen = $("profileModal").classList.contains("show");
+    const wasSuccessOpen = $("successModal").classList.contains("show");
+
+    $("profileModal").classList.remove("show");
+    $("successModal").classList.remove("show");
+
+    // nếu ESC dùng để quay lại form -> scroll lên đầu
+    if (wasProfileOpen || wasSuccessOpen) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+});
+// back to form event listener
+$("backToFormBtn").addEventListener("click", function () {
+  $("profileModal").classList.remove("show");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+});
+
+$("msFormLink").addEventListener("click", function () {
+  // chỉ xử lý khi unlocked
+  if (this.classList.contains("unlocked")) {
+    this.classList.remove("pulse"); // ngừng nhấp nháy
+  }
+});
+
+}); // end DOMContentLoaded
+
+
   </script>
+  <!-- MICRO TOAST -->
+<div id="microToast" class="toast" role="status" aria-live="polite">
+  <div class="toast-inner">
+    <span id="toastIcon" class="toast-icon">✅</span>
+    <span id="toastText">Step 2 link is now unlocked.</span>
+  </div>
+  </div>
+  <!-- Hidden debug output (kept for internal use, not visible to candidates) -->
+<pre id="jsonOutput" style="display:none;"></pre>
 </body>
 </html>
