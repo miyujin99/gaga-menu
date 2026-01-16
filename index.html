@@ -1063,24 +1063,30 @@
   print-color-adjust: exact;
 }
 
-/* Allow breaking, but avoid breaking INSIDE text line blocks */
-#pdfWrapper p,
-#pdfWrapper dd,
-#pdfWrapper dt,
-#pdfWrapper .dept-tag,
-#pdfWrapper .pill-small{
-  break-inside: avoid;
-  page-break-inside: avoid;
+/* ✅ MIN whitespace: allow containers/boxes to break */
+body.pdf-exporting #candidateProfileCard .profile-row,
+body.pdf-exporting #candidateProfileCard .profile-col,
+body.pdf-exporting #candidateProfileCard .box{
+  break-inside: auto !important;
+  page-break-inside: auto !important;
 }
 
-#pdfWrapper .box-header,
-#pdfWrapper .box-subtitle,
-#pdfWrapper .profile-sbi,
-#pdfWrapper .dl-grid,
-#pdfWrapper .dl-basic{
-  break-inside: avoid;
-  page-break-inside: avoid;
+/* ✅ NO cut text: protect text blocks */
+body.pdf-exporting #candidateProfileCard .box-header,
+body.pdf-exporting #candidateProfileCard .box-subtitle,
+body.pdf-exporting #candidateProfileCard dt,
+body.pdf-exporting #candidateProfileCard dd,
+body.pdf-exporting #candidateProfileCard p{
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
 }
+
+/* ✅ Important: many of your text blocks are <div> inside .box */
+body.pdf-exporting #candidateProfileCard .box > div{
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
 
 
   </style>
@@ -1745,7 +1751,7 @@ Your selection is used to reflect your development direction and support your le
 
 
 <!-- B) SBI label -->
-<div style="font-size:12px;margin-top:12px;">
+<div style="font-size:12px;margin-top:6px;">
   <strong>Candidate’s Example of Influencing or Motivating Others (SBI Format):</strong>
 </div>
 
@@ -2818,32 +2824,42 @@ $("crossNotice").style.display = anyCross ? "inline-block" : "none";
       XLSX.writeFile(wb, baseName + ".xlsx");
     }
 
-    function downloadProfilePdf(payload) {
-      const baseName = getFileBaseName(payload);
-      const opt = {
-        margin: [10, 10, 10, 10],
-        filename: baseName + ".pdf",
-        image: { type: "jpeg", quality: 0.98 },
-		pagebreak: { mode: ["css", "avoid-all", "legacy"] },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          scrollY: 0
-        },
-        jsPDF: {
-          unit: "mm",
-          format: "a4",
-          orientation: "portrait"
-        }
-      };
-
-      const element = document.getElementById("pdfWrapper");
-
-      html2pdf()
-        .set(opt)
-        .from(element)
-        .save();
+function downloadProfilePdf(payload) {
+  const baseName = getFileBaseName(payload);
+  const opt = {
+    margin: [10, 10, 10, 10],
+    filename: baseName + ".pdf",
+    image: { type: "jpeg", quality: 0.98 },
+    pagebreak: { mode: ["avoid-all", "css", "legacy"] },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      scrollY: 0
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
     }
+  };
+
+  const element = document.getElementById("pdfWrapper");
+
+  // ✅ turn on export-only rules
+  document.body.classList.add("pdf-exporting");
+
+  html2pdf()
+    .set(opt)
+    .from(element)
+    .save()
+    .then(() => {
+      document.body.classList.remove("pdf-exporting");
+    })
+    .catch(() => {
+      document.body.classList.remove("pdf-exporting");
+    });
+}
+
 
     // ===============================
     // LOCAL STORAGE
