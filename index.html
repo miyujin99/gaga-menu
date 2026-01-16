@@ -1088,6 +1088,37 @@ body.pdf-exporting #candidateProfileCard .box > div{
 }
 
 
+/* ===== PDF EXPORT: true 2-column flow (min whitespace) ===== */
+body.pdf-exporting #candidateProfileCard.pdf-columns{
+  column-count: 2;
+  column-gap: 12px;
+}
+
+/* Turn off row/flex behavior in export so items can flow */
+body.pdf-exporting #candidateProfileCard.pdf-columns .profile-row{
+  display: block !important;
+  margin: 0 0 10px !important;
+}
+
+/* Each box becomes a "column item" */
+body.pdf-exporting #candidateProfileCard.pdf-columns .profile-col,
+body.pdf-exporting #candidateProfileCard.pdf-columns .profile-col-full{
+  width: 100% !important;
+  flex: none !important;
+}
+/* ✅ PDF export: always remove box stretch height */
+body.pdf-exporting #candidateProfileCard .box{
+  height: auto !important;
+}
+
+/* Keep boxes intact (but let content flow to next page if box is very tall) */
+body.pdf-exporting #candidateProfileCard.pdf-columns .box{
+  display: inline-block !important;
+  width: 100% !important;
+  height: auto !important;       /* IMPORTANT: remove stretch */
+  break-inside: avoid !important; /* don't split small boxes */
+  page-break-inside: avoid !important;
+}
 
   </style>
 </head>
@@ -1653,7 +1684,8 @@ Your selection is used to reflect your development direction and support your le
 			</div>
           </div>
 
-          <div id="candidateProfileCard">
+          <div id="candidateProfileCard" class="pdf-columns">
+
             <!-- ROW 1 · BASIC INFO (FULL WIDTH, 3 COLUMNS) -->
             <div class="profile-row">
               <div class="profile-col-full">
