@@ -645,10 +645,11 @@
       margin-top: 4px;
     }
 
-    .profile-sbi dt {
-      font-weight: 600;
-      color: #4b5563;
-    }
+.profile-sbi dt {
+  font-weight: 600;
+  color: #854d0e;
+  margin-top: 8px;
+}
 
     .profile-sbi dd {
       margin: 0 0 4px;
@@ -1056,68 +1057,6 @@
 .guideline-note strong {
   font-weight: 700;
   color: #1f2937;
-}
-/* ===== PDF export: keep text readable across page breaks ===== */
-#pdfWrapper, #pdfWrapper *{
-  -webkit-print-color-adjust: exact;
-  print-color-adjust: exact;
-}
-
-/* ✅ MIN whitespace: allow containers/boxes to break */
-body.pdf-exporting #candidateProfileCard .profile-row,
-body.pdf-exporting #candidateProfileCard .profile-col,
-body.pdf-exporting #candidateProfileCard .box{
-  break-inside: auto !important;
-  page-break-inside: auto !important;
-}
-
-/* ✅ NO cut text: protect text blocks */
-body.pdf-exporting #candidateProfileCard .box-header,
-body.pdf-exporting #candidateProfileCard .box-subtitle,
-body.pdf-exporting #candidateProfileCard dt,
-body.pdf-exporting #candidateProfileCard dd,
-body.pdf-exporting #candidateProfileCard p{
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
-}
-
-/* ✅ Important: many of your text blocks are <div> inside .box */
-body.pdf-exporting #candidateProfileCard .box > div{
-  break-inside: avoid !important;
-  page-break-inside: avoid !important;
-}
-
-
-/* ===== PDF EXPORT: true 2-column flow (min whitespace) ===== */
-body.pdf-exporting #candidateProfileCard.pdf-columns{
-  column-count: 2;
-  column-gap: 12px;
-}
-
-/* Turn off row/flex behavior in export so items can flow */
-body.pdf-exporting #candidateProfileCard.pdf-columns .profile-row{
-  display: block !important;
-  margin: 0 0 10px !important;
-}
-
-/* Each box becomes a "column item" */
-body.pdf-exporting #candidateProfileCard.pdf-columns .profile-col,
-body.pdf-exporting #candidateProfileCard.pdf-columns .profile-col-full{
-  width: 100% !important;
-  flex: none !important;
-}
-/* ✅ PDF export: always remove box stretch height */
-body.pdf-exporting #candidateProfileCard .box{
-  height: auto !important;
-}
-
-/* Keep boxes intact (but let content flow to next page if box is very tall) */
-body.pdf-exporting #candidateProfileCard.pdf-columns .box{
-  display: inline-block !important;
-  width: 100% !important;
-  height: auto !important;       /* IMPORTANT: remove stretch */
-  break-inside: avoid !important; /* don't split small boxes */
-  page-break-inside: avoid !important;
 }
 
   </style>
@@ -1684,8 +1623,7 @@ Your selection is used to reflect your development direction and support your le
 			</div>
           </div>
 
-          <div id="candidateProfileCard" class="pdf-columns">
-
+          <div id="candidateProfileCard">
             <!-- ROW 1 · BASIC INFO (FULL WIDTH, 3 COLUMNS) -->
             <div class="profile-row">
               <div class="profile-col-full">
@@ -1737,6 +1675,19 @@ Your selection is used to reflect your development direction and support your le
                       </div>
                     </div>
                   </div>
+				  <!-- Cross-department Justification (Only show if cross-dept) -->
+				<div id="pdfCrossJustWrap" style="display:none; margin-top:10px;">
+				  <div style="font-size:11px;font-weight:800;color:#9a3412;text-transform:uppercase;letter-spacing:.04em;">
+				    Cross-department Justification
+				  </div>
+				  <div style="font-size:11px;color:#6b7280;margin:2px 0 6px;">
+				    Shown only when at least one preference is outside the current department.
+				  </div>
+				  <div id="pdfCrossJustText"
+				       style="font-size:12px;background:#fff7ed;border:1px dashed #fdba74;border-radius:8px;padding:8px 10px;color:#111827;white-space:pre-wrap;">
+				    —
+				  </div>
+				</div>
                 </div>
               </div>
 
@@ -1783,7 +1734,7 @@ Your selection is used to reflect your development direction and support your le
 
 
 <!-- B) SBI label -->
-<div style="font-size:12px;margin-top:6px;">
+<div style="font-size:12px;margin-top:12px;">
   <strong>Candidate’s Example of Influencing or Motivating Others (SBI Format):</strong>
 </div>
 
@@ -2745,6 +2696,21 @@ const anyCross =
   (p2 && currentDept && p2.department !== currentDept);
 
 $("crossNotice").style.display = anyCross ? "inline-block" : "none";
+// Cross-dept justification inside PDF Roles box
+const cj = payload.preferences.crossDepartmentJustification || "";
+const wrap = $("pdfCrossJustWrap");
+const txt = $("pdfCrossJustText");
+
+if (wrap && txt) {
+  if (anyCross && cj.trim()) {
+    wrap.style.display = "block";
+    txt.innerText = cj.trim();
+  } else {
+    wrap.style.display = "none";
+    txt.innerText = "—";
+  }
+}
+
 
 
       // Reasons
@@ -2856,42 +2822,31 @@ $("crossNotice").style.display = anyCross ? "inline-block" : "none";
       XLSX.writeFile(wb, baseName + ".xlsx");
     }
 
-function downloadProfilePdf(payload) {
-  const baseName = getFileBaseName(payload);
-  const opt = {
-    margin: [10, 10, 10, 10],
-    filename: baseName + ".pdf",
-    image: { type: "jpeg", quality: 0.98 },
-    pagebreak: { mode: ["avoid-all", "css", "legacy"] },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      scrollY: 0
-    },
-    jsPDF: {
-      unit: "mm",
-      format: "a4",
-      orientation: "portrait"
+    function downloadProfilePdf(payload) {
+      const baseName = getFileBaseName(payload);
+      const opt = {
+        margin: [10, 10, 10, 10],
+        filename: baseName + ".pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          scrollY: 0
+        },
+        jsPDF: {
+          unit: "mm",
+          format: "a4",
+          orientation: "portrait"
+        }
+      };
+
+      const element = document.getElementById("pdfWrapper");
+
+      html2pdf()
+        .set(opt)
+        .from(element)
+        .save();
     }
-  };
-
-  const element = document.getElementById("pdfWrapper");
-
-  // ✅ turn on export-only rules
-  document.body.classList.add("pdf-exporting");
-
-  html2pdf()
-    .set(opt)
-    .from(element)
-    .save()
-    .then(() => {
-      document.body.classList.remove("pdf-exporting");
-    })
-    .catch(() => {
-      document.body.classList.remove("pdf-exporting");
-    });
-}
-
 
     // ===============================
     // LOCAL STORAGE
