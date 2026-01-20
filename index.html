@@ -1693,15 +1693,31 @@ Your selection is used to reflect your development direction and support your le
       </section>
 
       <!-- ACTIONS -->
-      <div class="btn-row">
-        <button type="reset" class="btn btn-secondary" id="btnReset">
-          Clear
-        </button>
-        <button type="submit" class="btn btn-primary">
-          <span class="btn-icon">📤</span>
-          <span>Generate Candidate Profile</span>
-        </button>
-      </div>  
+<div class="btn-row">
+  <!-- ✅ NEW: Upload Excel to refill -->
+  <button type="button" class="btn btn-secondary" id="btnUploadExcel">
+    <span class="btn-icon">📥</span>
+    <span>Upload Excel to Edit</span>
+  </button>
+
+  <!-- hidden file input -->
+  <input
+    type="file"
+    id="excelUploadInput"
+    accept=".xlsx,.xls"
+    style="display:none;"
+  />
+
+  <button type="reset" class="btn btn-secondary" id="btnReset">
+    Clear
+  </button>
+
+  <button type="submit" class="btn btn-primary">
+    <span class="btn-icon">📤</span>
+    <span>Generate Candidate Profile</span>
+  </button>
+</div>
+
     </form>
 
     <!-- ========== PROFILE MODAL ========== -->
@@ -3235,6 +3251,202 @@ try {
         console.warn("LocalStorage clear error:", e);
       }
     }
+
+
+// ===============================
+// IMPORT EXCEL (Refill form)
+// ===============================
+function normHeader(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\u2013\u2014]/g, "-")     // en/em dash -> "-"
+    .replace(/[^a-z0-9]+/g, " ")         // keep alnum
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+function getCell(map, keyCandidates) {
+  for (const k of keyCandidates) {
+    const nk = normHeader(k);
+    if (map[nk] !== undefined) return map[nk];
+  }
+  return "";
+}
+
+function setRadio(name, valRaw) {
+  const val = String(valRaw || "").trim().toLowerCase();
+  // export đang humanize: "Yes", "Maybe / depends on role", "No"
+  // form cần: yes / maybe / no
+  let v = "";
+  if (val.startsWith("y")) v = "yes";
+  else if (val.startsWith("m")) v = "maybe";
+  else if (val.startsWith("n")) v = "no";
+
+  document.querySelectorAll(`input[name="${name}"]`).forEach(x => (x.checked = false));
+  if (v) {
+    const el = document.querySelector(`input[name="${name}"][value="${v}"]`);
+    if (el) el.checked = true;
+  }
+}
+
+function clearConsents() {
+  $("consentDevelopment").checked = false;
+  $("consentSharing").checked = false;
+  $("consentAccuracy").checked = false;
+}
+
+function safeSetSelect(selectId, value) {
+  const el = $(selectId);
+  if (!el) return;
+  el.value = value || "";
+}
+
+function refillFromPayloadLike(obj) {
+  // Basic
+  $("fullName").value = obj.fullName || "";
+  $("employeeId").value = obj.employeeId || "";
+  $("workEmail").value = obj.workEmail || "";
+
+  // Dept + current role depend on dept
+  $("currentDept").value = obj.currentDept || "";
+  refreshCurrentRoleOptions();
+  $("currentRole").value = obj.currentRole || "";
+
+  // Pref roles: Excel lưu title, form cần roleId
+  const p1RoleId = obj.pref1RoleTitle ? findRoleIdByTitle(obj.pref1RoleTitle) : "";
+  const p2RoleId = obj.pref2RoleTitle ? findRoleIdByTitle(obj.pref2RoleTitle) : "";
+
+  safeSetSelect("pref1Role", p1RoleId);
+  $("pref1Reason").value = obj.pref1Reason || "";
+
+  safeSetSelect("pref2Role", p2RoleId);
+  $("pref2Reason").value = obj.pref2Reason || "";
+
+  $("crossJustification").value = obj.crossJustification || "";
+
+  // Leadership & SBI
+  $("leadershipStyle").value = obj.leadershipStyle || "";
+  $("sbiSituation").value = obj.sbiSituation || "";
+  $("sbiBehavior").value = obj.sbiBehavior || "";
+  $("sbiImpact").value = obj.sbiImpact || "";
+
+  // Career
+  $("careerGoals").value = obj.careerGoals || "";
+  $("motivation").value = obj.motivation || "";
+
+  // Mobility
+  setRadio("changeDept", obj.changeDept || "");
+
+  // Optional
+  $("selfLeadership").value = obj.selfLeadership || "";
+
+  // Consents (Excel file không lưu true/false consents) -> set default false, user tick lại
+  clearConsents();
+
+  // Photo: Excel export hiện chỉ có "Has Photo" (Yes/No) nên không restore ảnh được
+  // => clear photo để tránh “ảo tưởng” đã có ảnh
+  photoDataUrl = "";
+  setPhotoPreview("");
+  if ($("profilePhoto")) $("profilePhoto").value = "";
+  try { localStorage.removeItem(PHOTO_KEY); } catch(e) {}
+
+  updateRoleDependentUI();
+  saveFormToLocalStorage();
+
+  // Import = đang chỉnh sửa lại => lock Step2 để bắt họ download lại
+  resetDownloadStep();
+  lockMsFormLink();
+}
+
+async function importExcelAndRefill(file) {
+  if (!file) return;
+
+  const extOk = /\.(xlsx|xls)$/i.test(file.name || "");
+  if (!extOk) {
+    showToast("Please upload an Excel file (.xlsx/.xls).", "warn", 2600);
+    return;
+  }
+
+  try {
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: "array" });
+    const sheetName = wb.SheetNames[0];
+    const ws = wb.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false });
+
+    if (!rows || rows.length < 2) {
+      showToast("This Excel file looks empty or invalid.", "error", 2800);
+      return;
+    }
+
+    const header = rows[0] || [];
+    const values = rows[1] || [];
+
+    const map = {};
+    for (let i = 0; i < header.length; i++) {
+      const h = normHeader(header[i]);
+      if (!h) continue;
+      map[h] = values[i] ?? "";
+    }
+
+    // Build a payload-like object using header names from your exported Excel
+    const obj = {
+      fullName: getCell(map, ["Full Name"]),
+      employeeId: getCell(map, ["Employee ID"]),
+      workEmail: getCell(map, ["Work Email"]),
+      currentDept: getCell(map, ["Current Department"]),
+      currentRole: getCell(map, ["Current Role"]),
+
+      pref1RoleTitle: getCell(map, ["Pref1 Role Title", "Pref 1 Role Title"]),
+      pref1Reason: getCell(map, ["Pref1 Reason", "Pref 1 Reason"]),
+
+      pref2RoleTitle: getCell(map, ["Pref2 Role Title", "Pref 2 Role Title"]),
+      pref2Reason: getCell(map, ["Pref2 Reason", "Pref 2 Reason"]),
+
+      crossJustification: getCell(map, ["Cross-dept Justification", "Cross dept Justification"]),
+
+      leadershipStyle: getCell(map, ["Leadership Style"]),
+      sbiSituation: getCell(map, ["SBI – Situation", "SBI - Situation", "SBI Situation"]),
+      sbiBehavior: getCell(map, ["SBI – Behavior", "SBI - Behavior", "SBI Behavior"]),
+      sbiImpact: getCell(map, ["SBI – Impact", "SBI - Impact", "SBI Impact"]),
+
+      careerGoals: getCell(map, ["Career Goals (1–3 years)", "Career Goals (1-3 years)", "Career Goals"]),
+      motivation: getCell(map, ["Motivation for Roles", "Motivation"]),
+
+      changeDept: getCell(map, ["Willingness to Change Dept", "Willingness To Change Dept"]),
+      selfLeadership: getCell(map, ["Self-leadership Example", "Self Leadership Example"])
+    };
+
+    refillFromPayloadLike(obj);
+    clearAllErrors();
+    $("successMessage").style.display = "none";
+    lastPayload = null;
+
+    showToast("Excel loaded. Your form has been refilled for editing.", "success", 2600);
+
+    // scroll lên đầu form cho sạch
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (e) {
+    console.warn("importExcelAndRefill error:", e);
+    showToast("Could not read this Excel file. Please upload the exported file from this tool.", "error", 3200);
+  }
+}
+
+// Upload Excel button -> open file picker
+$("btnUploadExcel")?.addEventListener("click", () => {
+  $("excelUploadInput")?.click();
+});
+
+// When selected -> import & refill
+$("excelUploadInput")?.addEventListener("change", async function () {
+  const f = this.files && this.files[0];
+  if (!f) return;
+  await importExcelAndRefill(f);
+  // allow re-upload same file again
+  this.value = "";
+});
+
 
     // ===============================
     // MAIN INIT
