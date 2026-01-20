@@ -3021,9 +3021,9 @@ if (wrap && txt) {
   const opt = {
     margin: [10, 10, 10, 10],
     filename: baseName + ".pdf",
-    image: { type: "jpeg", quality: 0.98 },
+    image: { type: "jpeg", quality: 1 },
     html2canvas: {
-      scale: 2,
+      scale: 3,
       useCORS: true,
       scrollY: 0
     },
@@ -3191,7 +3191,7 @@ $("profilePhoto")?.addEventListener("change", async function () {
   }
 
   try {
-    photoDataUrl = await readAndCompressImage(file, 720, 0.82);
+    photoDataUrl = await readAndCompressImage(file, 1200, 0.92);
     setPhotoPreview(photoDataUrl);
     try { localStorage.setItem(PHOTO_KEY, photoDataUrl); } catch(e) {}
     saveFormToLocalStorage();
