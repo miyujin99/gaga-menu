@@ -2059,9 +2059,11 @@ function readAndCompressImage(file, maxSize = 720, quality = 0.82) {
         canvas.width = nw;
         canvas.height = nh;
         const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0, nw, nh);
+        
 		ctx.imageSmoothingEnabled = true;
-ctx.imageSmoothingQuality = "high";
+		ctx.imageSmoothingQuality = "high";
+		ctx.drawImage(img, 0, 0, nw, nh);
+
 
         const out = canvas.toDataURL("image/png");
         resolve(out);
@@ -3047,11 +3049,11 @@ const opt = {
   filename: baseName + ".pdf",
 
   // ✅ ĐỔI SANG PNG để tránh “mờ do JPEG”
-  image: { type: "png", quality: 1 },
+  image: { type: "png", quality: 0.98 },
 
   html2canvas: {
     // ✅ scale cao hơn nữa (3 đôi khi vẫn soft)
-    scale: 4,
+    scale: 3,
     useCORS: true,
     scrollY: 0,
 
@@ -3227,7 +3229,7 @@ $("profilePhoto")?.addEventListener("change", async function () {
   }
 
   try {
-    photoDataUrl = await readAndCompressImage(file, 1400, 0.92);
+    photoDataUrl = await readAndCompressImage(file, 900, 0.92);
     setPhotoPreview(photoDataUrl);
     try { localStorage.setItem(PHOTO_KEY, photoDataUrl); } catch(e) {}
     saveFormToLocalStorage();
