@@ -2041,7 +2041,7 @@ function readAndCompressImage(file, maxSize = 720, quality = 0.82) {
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, nw, nh);
 
-        const out = canvas.toDataURL("image/jpeg", quality);
+        const out = canvas.toDataURL("image/png");
         resolve(out);
       };
       img.src = reader.result;
