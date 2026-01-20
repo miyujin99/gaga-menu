@@ -10,10 +10,7 @@
 <link rel="shortcut icon" href="./assets/favicon.png?v=1">
 
   <!-- PDF export library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <!-- SheetJS for Excel export -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
@@ -484,44 +481,6 @@
       line-height: 1;
       color: #6b7280;
     }
-/* =========================
-   PDF page-break safety
-   ========================= */
-
-/* Chỉ áp dụng khi xuất PDF (print engine) */
-@media print {
-  #pdfWrapper,
-  #candidateProfileCard,
-  .profile-row,
-  .profile-col,
-  .profile-col-full,
-  .box,
-  .profile-sbi,
-  .dl-basic,
-  .dl-grid {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  /* tránh tách tiêu đề khỏi nội dung ngay sau nó */
-  .box-header,
-  .box-subtitle,
-  h2, h3, strong {
-    break-after: avoid !important;
-    page-break-after: avoid !important;
-  }
-}
-
-/* Nhiều browser/html2pdf không “tôn trọng” @media print hoàn toàn,
-   nên set luôn ở mode thường (safe) */
-#pdfWrapper .profile-row,
-#pdfWrapper .box,
-#pdfWrapper .profile-sbi,
-#pdfWrapper .dl-basic,
-#pdfWrapper .dl-grid {
-  break-inside: avoid;
-  page-break-inside: avoid;
-}
 
     /* PDF wrapper roughly A4 width */
     #pdfWrapper {
@@ -3143,14 +3102,35 @@ if (wrap && txt) {
     function downloadProfilePdf(payload) {
   const baseName = getFileBaseName(payload);
 
+  // ✅ If snapshot ready for this payload => INSTANT download
+  const key = makeSnapshotKey(payload);
+  if (pdfSnapshotReady && pdfSnapshotKey === key && pdfSnapshotDataUrl) {
+    const { jsPDF } = window.jspdf || {};
+    if (!jsPDF) {
+      console.warn("jsPDF not found, fallback to html2pdf");
+    } else {
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      // A4 size in mm
+      const pageW = 210;
+      const pageH = 297;
+
+      // image props to fit full page while keeping aspect
+      const imgProps = pdf.getImageProperties(pdfSnapshotDataUrl);
+      const imgW = pageW;
+      const imgH = (imgProps.height * imgW) / imgProps.width;
+
+      // center vertically if shorter than page (or just start at top)
+      const y = 0;
+      pdf.addImage(pdfSnapshotDataUrl, "JPEG", 0, y, imgW, imgH, undefined, "FAST");
+      pdf.save(baseName + ".pdf");
+      return Promise.resolve();
+    }
+  }
+
   // ✅ Fallback (slower): html2pdf direct render
   const element = document.getElementById("pdfWrapper");
   const actions = document.getElementById("profileModalActions");
-
-  if (!element) {
-    console.warn("pdfWrapper not found");
-    return Promise.resolve();
-  }
 
   const prevDisplay = actions ? actions.style.display : "";
   if (actions) actions.style.display = "none";
@@ -3160,23 +3140,7 @@ if (wrap && txt) {
     filename: baseName + ".pdf",
     image: { type: "jpeg", quality: 0.92 },
     html2canvas: { scale: 2, useCORS: true, scrollY: 0, logging: false },
-    jsPDF: { unit: "mm", format: "a4", orientation: "portrait", compress: true },
-
-    // ✅ NEW: tránh cắt ngang chữ giữa trang
-    pagebreak: {
-      mode: ["css", "legacy"],
-      avoid: [
-        "#pdfWrapper .profile-row",
-        "#pdfWrapper .box",
-        "#pdfWrapper .profile-sbi",
-        "#pdfWrapper .dl-basic",
-        "#pdfWrapper .dl-grid",
-        "#pdfWrapper #pdfCrossJustWrap",
-        "#pdfWrapper #asp-short",
-        "#pdfWrapper #asp-mid",
-        "#pdfWrapper #profile-leadershipStyle"
-      ]
-    }
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait", compress: true }
   };
 
   return html2pdf()
@@ -3187,7 +3151,6 @@ if (wrap && txt) {
       if (actions) actions.style.display = prevDisplay || "";
     });
 }
-
 
     // ===============================
     // LOCAL STORAGE
@@ -3671,6 +3634,7 @@ if (secretLogo) {
           // open modal
           $("profileModal").classList.add("show");
 		  resetDownloadStep(); // NEW: always start from PDF when opening preview
+		  setTimeout(() => preparePdfSnapshot(payload), 60);
         } else {
           $("successMessage").style.display = "none";
           scrollToFirstError();
