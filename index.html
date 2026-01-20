@@ -2040,6 +2040,8 @@ function readAndCompressImage(file, maxSize = 720, quality = 0.82) {
         canvas.height = nh;
         const ctx = canvas.getContext("2d");
         ctx.drawImage(img, 0, 0, nw, nh);
+		ctx.imageSmoothingEnabled = true;
+ctx.imageSmoothingQuality = "high";
 
         const out = canvas.toDataURL("image/png");
         resolve(out);
@@ -3018,21 +3020,33 @@ if (wrap && txt) {
   const prevDisplay = actions ? actions.style.display : "";
   if (actions) actions.style.display = "none";
 
-  const opt = {
-    margin: [10, 10, 10, 10],
-    filename: baseName + ".pdf",
-    image: { type: "jpeg", quality: 1 },
-    html2canvas: {
-      scale: 3,
-      useCORS: true,
-      scrollY: 0
-    },
-    jsPDF: {
-      unit: "mm",
-      format: "a4",
-      orientation: "portrait"
-    }
-  };
+const opt = {
+  margin: [10, 10, 10, 10],
+  filename: baseName + ".pdf",
+
+  // ✅ ĐỔI SANG PNG để tránh “mờ do JPEG”
+  image: { type: "png", quality: 1 },
+
+  html2canvas: {
+    // ✅ scale cao hơn nữa (3 đôi khi vẫn soft)
+    scale: 4,
+    useCORS: true,
+    scrollY: 0,
+
+    // ✅ giúp chữ/edges nét hơn (tùy browser)
+    letterRendering: true
+  },
+
+  jsPDF: {
+    unit: "mm",
+    format: "a4",
+    orientation: "portrait",
+
+    // ✅ tắt nén PDF (đây là cái hay làm mờ)
+    compress: false
+  }
+};
+
 
   return html2pdf()
     .set(opt)
@@ -3191,7 +3205,7 @@ $("profilePhoto")?.addEventListener("change", async function () {
   }
 
   try {
-    photoDataUrl = await readAndCompressImage(file, 1200, 0.92);
+    photoDataUrl = await readAndCompressImage(file, 1400, 0.92);
     setPhotoPreview(photoDataUrl);
     try { localStorage.setItem(PHOTO_KEY, photoDataUrl); } catch(e) {}
     saveFormToLocalStorage();
