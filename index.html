@@ -717,8 +717,11 @@
   border-radius:14px;
   border:1px solid #e5e7eb;
   background:#f9fafb;
-  object-fit:cover;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
+
 
 .pdf-photo-empty{
   display:flex;
@@ -1743,7 +1746,7 @@ Your selection is used to reflect your development direction and support your le
 
   <div class="basic-info-photo">
     <!-- If has photo -->
-    <img id="bi-photo" class="pdf-photo" src="" alt="Profile photo" style="display:none;" />
+<div id="bi-photo" class="pdf-photo" style="display:none;"></div>
 
     <!-- If no photo -->
     <div id="bi-photo-empty" class="pdf-photo-empty">
@@ -1924,15 +1927,21 @@ Your selection is used to reflect your development direction and support your le
         </div>
 
         <!-- Buttons under modal -->
-        <div class="btn-row" style="margin-top:14px;">
-          <button type="button" class="btn btn-secondary" id="backToFormBtn">
-            ⬅ Back to form
-          </button>
-			<button type="button" class="btn btn-primary" id="finalSubmitBtn">
-			  ✅ Confirm & Download PDF + Excel Files
-			</button>
+<!-- Buttons under modal -->
+<div
+  class="btn-row"
+  id="profileModalActions"
+  data-html2canvas-ignore="true"
+  style="margin-top:14px;"
+>
+  <button type="button" class="btn btn-secondary" id="backToFormBtn">
+    ⬅ Back to form
+  </button>
+  <button type="button" class="btn btn-primary" id="finalSubmitBtn">
+    ✅ Confirm & Download PDF + Excel Files
+  </button>
+</div>
 
-        </div>
       </div>
     </div>
 
@@ -2821,22 +2830,23 @@ function showJsonPreview(payload) {
       $("bi-name").innerText = payload.candidate.fullName || "—";
       $("bi-dept").innerText = payload.candidate.currentDept || "—";
       $("bi-role").innerText = payload.candidate.currentRole || "—";
-	  // Photo in PDF Basic Info
+	    // Photo in PDF Basic Info
 const p = payload.candidate.photoDataUrl || "";
-const img = $("bi-photo");
+const photoBox = $("bi-photo");
 const empty = $("bi-photo-empty");
 
-if (img && empty) {
+if (photoBox && empty) {
   if (p) {
-    img.src = p;
-    img.style.display = "block";
+    photoBox.style.backgroundImage = `url("${p}")`;
+    photoBox.style.display = "block";
     empty.style.display = "none";
   } else {
-    img.src = "";
-    img.style.display = "none";
+    photoBox.style.backgroundImage = "";
+    photoBox.style.display = "none";
     empty.style.display = "flex";
   }
 }
+
 
 
       // Preferences
@@ -2999,30 +3009,40 @@ if (wrap && txt) {
     }
 
     function downloadProfilePdf(payload) {
-      const baseName = getFileBaseName(payload);
-      const opt = {
-        margin: [10, 10, 10, 10],
-        filename: baseName + ".pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          scrollY: 0
-        },
-        jsPDF: {
-          unit: "mm",
-          format: "a4",
-          orientation: "portrait"
-        }
-      };
+  const baseName = getFileBaseName(payload);
 
-      const element = document.getElementById("pdfWrapper");
+  const element = document.getElementById("pdfWrapper");
+  const actions = document.getElementById("profileModalActions");
 
-      html2pdf()
-        .set(opt)
-        .from(element)
-        .save();
+  // ✅ Hide action buttons during PDF capture
+  const prevDisplay = actions ? actions.style.display : "";
+  if (actions) actions.style.display = "none";
+
+  const opt = {
+    margin: [10, 10, 10, 10],
+    filename: baseName + ".pdf",
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: {
+      scale: 2,
+      useCORS: true,
+      scrollY: 0
+    },
+    jsPDF: {
+      unit: "mm",
+      format: "a4",
+      orientation: "portrait"
     }
+  };
+
+  return html2pdf()
+    .set(opt)
+    .from(element)
+    .save()
+    .finally(() => {
+      // ✅ Restore action buttons
+      if (actions) actions.style.display = prevDisplay || "";
+    });
+}
 
     // ===============================
     // LOCAL STORAGE
