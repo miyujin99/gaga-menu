@@ -2745,7 +2745,7 @@ if (!changeDept) {
           employeeId: $("employeeId").value.trim(),
           workEmail: $("workEmail").value.trim(),
           currentDept: $("currentDept").value,
-          currentRole: $("currentRole").value.trim()
+          currentRole: $("currentRole").value.trim(),
 		  photoDataUrl: photoDataUrl || null
         },
         preferences: {
@@ -2988,7 +2988,6 @@ if (wrap && txt) {
           humanizeChangeDept(payload.careerAndMobility.willingChangeDept),
           payload.careerAndMobility.selfLeadershipExample || "",
 		  (payload.candidate.photoDataUrl ? "Yes" : "No"),
-payload.meta.submittedAt || ""
           payload.meta.submittedAt || ""
         ]
       ];
