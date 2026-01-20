@@ -2183,6 +2183,55 @@ function lockMsFormLink() {
     let targetRoles = [];
     const rolesMap = {};
     let lastPayload = null;
+	// ===== PDF SNAPSHOT CACHE (for instant download) =====
+let pdfSnapshotDataUrl = "";     // image of pdfWrapper (JPEG)
+let pdfSnapshotKey = "";         // identify snapshot belongs to which payload
+let pdfSnapshotReady = false;
+let pdfSnapshotBusy = false;
+
+function makeSnapshotKey(payload){
+  return (payload?.candidate?.employeeId || "") + "|" + (payload?.meta?.submittedAt || "");
+}
+
+async function preparePdfSnapshot(payload){
+  if (!payload) return;
+  const key = makeSnapshotKey(payload);
+
+  if (pdfSnapshotReady && pdfSnapshotKey === key) return;
+  if (pdfSnapshotBusy) return;
+
+  const el = document.getElementById("pdfWrapper");
+  const actions = document.getElementById("profileModalActions");
+  if (!el) return;
+
+  pdfSnapshotBusy = true;
+  pdfSnapshotReady = false;
+  pdfSnapshotKey = key;
+
+  const prevDisplay = actions ? actions.style.display : "";
+  if (actions) actions.style.display = "none";
+
+  try {
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+      scrollY: 0,
+      logging: false
+    });
+
+    pdfSnapshotDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    pdfSnapshotReady = true;
+  } catch (e) {
+    console.warn("preparePdfSnapshot failed:", e);
+    pdfSnapshotDataUrl = "";
+    pdfSnapshotReady = false;
+  } finally {
+    if (actions) actions.style.display = prevDisplay || "";
+    pdfSnapshotBusy = false;
+  }
+}
+
 	let photoDataUrl = ""; // uploaded photo as base64 data URL (compressed)
 const PHOTO_KEY = "talent_uplift_profile_photo_v1"; // persist photo
 
@@ -3037,47 +3086,52 @@ if (wrap && txt) {
     function downloadProfilePdf(payload) {
   const baseName = getFileBaseName(payload);
 
+  // ✅ If snapshot ready for this payload => INSTANT download
+  const key = makeSnapshotKey(payload);
+  if (pdfSnapshotReady && pdfSnapshotKey === key && pdfSnapshotDataUrl) {
+    const { jsPDF } = window.jspdf || {};
+    if (!jsPDF) {
+      console.warn("jsPDF not found, fallback to html2pdf");
+    } else {
+      const pdf = new jsPDF("p", "mm", "a4");
+
+      // A4 size in mm
+      const pageW = 210;
+      const pageH = 297;
+
+      // image props to fit full page while keeping aspect
+      const imgProps = pdf.getImageProperties(pdfSnapshotDataUrl);
+      const imgW = pageW;
+      const imgH = (imgProps.height * imgW) / imgProps.width;
+
+      // center vertically if shorter than page (or just start at top)
+      const y = 0;
+      pdf.addImage(pdfSnapshotDataUrl, "JPEG", 0, y, imgW, imgH, undefined, "FAST");
+      pdf.save(baseName + ".pdf");
+      return Promise.resolve();
+    }
+  }
+
+  // ✅ Fallback (slower): html2pdf direct render
   const element = document.getElementById("pdfWrapper");
   const actions = document.getElementById("profileModalActions");
 
-  // ✅ Hide action buttons during PDF capture
   const prevDisplay = actions ? actions.style.display : "";
   if (actions) actions.style.display = "none";
 
-const opt = {
-  margin: [10, 10, 10, 10],
-  filename: baseName + ".pdf",
-
-  // ✅ ĐỔI SANG PNG để tránh “mờ do JPEG”
-  image: { type: "png", quality: 0.98 },
-
-  html2canvas: {
-    // ✅ scale cao hơn nữa (3 đôi khi vẫn soft)
-    scale: 3,
-    useCORS: true,
-    scrollY: 0,
-
-    // ✅ giúp chữ/edges nét hơn (tùy browser)
-    letterRendering: true
-  },
-
-  jsPDF: {
-    unit: "mm",
-    format: "a4",
-    orientation: "portrait",
-
-    // ✅ tắt nén PDF (đây là cái hay làm mờ)
-    compress: false
-  }
-};
-
+  const opt = {
+    margin: [10, 10, 10, 10],
+    filename: baseName + ".pdf",
+    image: { type: "jpeg", quality: 0.92 },
+    html2canvas: { scale: 2, useCORS: true, scrollY: 0, logging: false },
+    jsPDF: { unit: "mm", format: "a4", orientation: "portrait", compress: true }
+  };
 
   return html2pdf()
     .set(opt)
     .from(element)
     .save()
     .finally(() => {
-      // ✅ Restore action buttons
       if (actions) actions.style.display = prevDisplay || "";
     });
 }
@@ -3368,6 +3422,7 @@ if (secretLogo) {
           // open modal
           $("profileModal").classList.add("show");
 		  resetDownloadStep(); // NEW: always start from PDF when opening preview
+		  setTimeout(() => preparePdfSnapshot(payload), 60);
         } else {
           $("successMessage").style.display = "none";
           scrollToFirstError();
