@@ -711,16 +711,33 @@
   justify-content:center;
 }
 
+/* ===== PDF Photo (crop wrapper) ===== */
 .pdf-photo{
   width:108px;
   height:108px;
   border-radius:14px;
   border:1px solid #e5e7eb;
   background:#f9fafb;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  overflow:hidden;
+  position:relative;
 }
+
+/* Crop kiểu “cover” nhưng ổn định hơn html2canvas */
+.pdf-photo img{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+
+  /* quan trọng: để ảnh không bị bè, ưu tiên cover */
+  object-fit: cover;
+
+  /* tránh baseline gap */
+  display:block;
+}
+
 
 
 .pdf-photo-empty{
@@ -1746,7 +1763,10 @@ Your selection is used to reflect your development direction and support your le
 
   <div class="basic-info-photo">
     <!-- If has photo -->
-<div id="bi-photo" class="pdf-photo" style="display:none;"></div>
+<div id="bi-photo" class="pdf-photo" style="display:none;">
+  <img id="bi-photo-img" alt="Profile photo" src="" />
+</div>
+
 
     <!-- If no photo -->
     <div id="bi-photo-empty" class="pdf-photo-empty">
@@ -2835,19 +2855,21 @@ function showJsonPreview(payload) {
 	    // Photo in PDF Basic Info
 const p = payload.candidate.photoDataUrl || "";
 const photoBox = $("bi-photo");
+const photoImg = $("bi-photo-img");
 const empty = $("bi-photo-empty");
 
-if (photoBox && empty) {
+if (photoBox && empty && photoImg) {
   if (p) {
-    photoBox.style.backgroundImage = `url("${p}")`;
+    photoImg.src = p;
     photoBox.style.display = "block";
     empty.style.display = "none";
   } else {
-    photoBox.style.backgroundImage = "";
+    photoImg.src = "";
     photoBox.style.display = "none";
     empty.style.display = "flex";
   }
 }
+
 
 
 
