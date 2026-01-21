@@ -1819,49 +1819,50 @@ Your selection is used to reflect your development direction and support your le
           </div>
 
           <div id="candidateProfileCard">
-            <!-- ROW 1 · BASIC INFO (FULL WIDTH, 3 COLUMNS) -->
-            <div class="profile-row">
-              <div class="profile-col-full">
-                <div class="box">
-                  <div class="box-header">
-                    <span class="icon">👤</span>
-                    <span>Basic Info</span>
-                  </div>
-                  <div class="basic-info-flex">
-  <div class="basic-info-left">
-    <dl class="dl-basic">
-      <div class="bi-item">
-        <dt>Full name</dt>
-        <dd id="bi-name">—</dd>
+<!-- ROW 1 · BASIC INFO (FULL WIDTH, 3 COLUMNS) -->
+<div class="profile-row">
+  <div class="profile-col-full">
+    <div class="box">
+      <div class="box-header">
+        <span class="icon">👤</span>
+        <span>Basic Info</span>
       </div>
-      <div class="bi-item">
-        <dt>Department</dt>
-        <dd id="bi-dept">—</dd>
+
+      <div class="basic-info-flex">
+        <div class="basic-info-left">
+          <dl class="dl-basic">
+            <div class="bi-item">
+              <dt>Full name</dt>
+              <dd id="bi-name">—</dd>
+            </div>
+            <div class="bi-item">
+              <dt>Department</dt>
+              <dd id="bi-dept">—</dd>
+            </div>
+            <div class="bi-item">
+              <dt>Current role</dt>
+              <dd id="bi-role">—</dd>
+            </div>
+          </dl>
+        </div>
+
+        <div class="basic-info-photo">
+          <!-- If has photo -->
+          <div id="bi-photo" class="pdf-photo" style="display:none;">
+            <img id="bi-photo-img" alt="Profile photo" src="" />
+          </div>
+
+          <!-- If no photo -->
+          <div id="bi-photo-empty" class="pdf-photo-empty">
+            <div style="font-size:18px;">📷</div>
+            <div>No photo</div>
+          </div>
+        </div>
       </div>
-      <div class="bi-item">
-        <dt>Current role</dt>
-        <dd id="bi-role">—</dd>
-      </div>
-    </dl>
-  </div>
 
-  <div class="basic-info-photo">
-    <!-- If has photo -->
-<div id="bi-photo" class="pdf-photo" style="display:none;">
-  <img id="bi-photo-img" alt="Profile photo" src="" />
-</div>
-
-
-    <!-- If no photo -->
-    <div id="bi-photo-empty" class="pdf-photo-empty">
-      <div style="font-size:18px;">📷</div>
-      <div>No photo</div>
     </div>
   </div>
 </div>
-
-              </div>
-            </div>
 
             <!-- ROW 2A · Development Preferences – Roles (FULL WIDTH) -->
 <div class="profile-row">
