@@ -2135,6 +2135,29 @@ Your selection is used to reflect your development direction and support your le
         .replace(/'/g, "&#039;");
     }
 	
+	function preserveTextToHtml(str) {
+  if (str === null || str === undefined) return "—";
+  const s = String(str).replace(/\r\n/g, "\n");
+
+  // Escape HTML trước
+  let out = escapeHtml(s);
+
+  // Giữ nhiều spaces (>=2) bằng &nbsp;
+  out = out.replace(/ {2,}/g, (m) => "&nbsp;".repeat(m.length));
+
+  // Newline -> <br> để giữ đúng khoảng cách (kể cả dòng trống)
+  out = out.replace(/\n/g, "<br>");
+
+  return out || "—";
+}
+
+function setPreservedHtml(id, value) {
+  const el = $(id);
+  if (!el) return;
+  el.innerHTML = preserveTextToHtml(value);
+}
+
+	
 function readAndCompressImage(file, maxSize = 720, quality = 0.82) {
   return new Promise((resolve, reject) => {
     if (!file) return resolve("");
@@ -3042,13 +3065,14 @@ if (photoBox && empty && photoImg) {
         $("pref2").innerText = "—";
       }
 
-      // Cross-dept badge for 2nd preference
+// Cross-dept badge for 2nd preference
 const currentDept = payload.candidate.currentDept;
 const anyCross =
   (p1 && currentDept && p1.department !== currentDept) ||
   (p2 && currentDept && p2.department !== currentDept);
 
 $("crossNotice").style.display = anyCross ? "inline-block" : "none";
+
 // Cross-dept justification inside PDF Roles box
 const cj = payload.preferences.crossDepartmentJustification || "";
 const wrap = $("pdfCrossJustWrap");
@@ -3057,50 +3081,43 @@ const txt = $("pdfCrossJustText");
 if (wrap && txt) {
   if (anyCross && cj.trim()) {
     wrap.style.display = "block";
-    txt.innerText = cj.trim();
+    // ✅ preserve spacing/newlines
+    txt.innerHTML = preserveTextToHtml(cj.trim());
   } else {
     wrap.style.display = "none";
-    txt.innerText = "—";
+    txt.innerHTML = "—";
   }
 }
 
+// Reasons (textarea -> preserve)
+setPreservedHtml("rs1", (p1 && p1.reason) || "—");
+setPreservedHtml("rs2", (p2 && p2.reason) || "—");
 
+// Mobility (short value -> innerText is fine)
+$("mob-change").innerText = humanizeChangeDept(
+  payload.careerAndMobility.willingChangeDept
+);
 
-      // Reasons
-      $("rs1").innerText = (p1 && p1.reason) || "—";
-      $("rs2").innerText = (p2 && p2.reason) || "—";
+// Aspiration (textarea -> preserve)
+setPreservedHtml("asp-short", payload.careerAndMobility.careerGoals || "—");
+setPreservedHtml("asp-mid", payload.careerAndMobility.motivation || "—");
 
-      // Mobility
-      $("mob-change").innerText = humanizeChangeDept(
-        payload.careerAndMobility.willingChangeDept
-      );
+// Leadership & SBI (textarea -> preserve)
+setPreservedHtml("profile-leadershipStyle", payload.roleSpecific.leadershipStyle || "—");
+setPreservedHtml("profile-sbiS", payload.roleSpecific.sbiSituation || "—");
+setPreservedHtml("profile-sbiB", payload.roleSpecific.sbiBehavior || "—");
+setPreservedHtml("profile-sbiI", payload.roleSpecific.sbiImpact || "—");
 
-      // Aspiration
-      $("asp-short").innerText =
-        payload.careerAndMobility.careerGoals || "—";
-      $("asp-mid").innerText =
-        payload.careerAndMobility.motivation || "—";
-
-      // Leadership & SBI
-      $("profile-leadershipStyle").innerText =
-        payload.roleSpecific.leadershipStyle || "—";
-      $("profile-sbiS").innerText =
-        payload.roleSpecific.sbiSituation || "—";
-      $("profile-sbiB").innerText =
-        payload.roleSpecific.sbiBehavior || "—";
-      $("profile-sbiI").innerText =
-        payload.roleSpecific.sbiImpact || "—";
-
-// Optional self-leadership (show only if filled)
+// Optional self-leadership (textarea -> preserve, show only if filled)
 const selfText = payload.careerAndMobility.selfLeadershipExample || "";
 const rowSelf = $("rowSelfLeadership");
 const selfBox = $("profile-selfLeadership");
 
 if (selfText.trim()) {
-  selfBox.innerText = selfText.trim();
-  rowSelf.style.display = "";      // ✅ trả về mặc định theo CSS
+  selfBox.innerHTML = preserveTextToHtml(selfText.trim());
+  rowSelf.style.display = "";
 } else {
-  rowSelf.style.display = "none";  // ✅ ẩn hẳn
+  rowSelf.style.display = "none";
 }
 
 
