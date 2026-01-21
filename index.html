@@ -674,6 +674,12 @@
       font-size: 12px;
     }
 
+/* PDF full-width definition list */
+.dl-grid-full{
+  grid-template-columns: 1fr !important;
+}
+
+
     .dl-grid dt {
       color: #6b7280;
     }
@@ -1869,7 +1875,7 @@ Your selection is used to reflect your development direction and support your le
         At least one preference should be in the current department.
       </div>
 
-      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
+<div style="display:grid;grid-template-columns:1fr;gap:8px;">
         <div>
           <div class="pill-small pill-blue" style="margin-bottom:3px;">1st Preference</div>
           <div id="pref1">—</div>
@@ -2002,12 +2008,12 @@ Your selection is used to reflect your development direction and support your le
         <span class="icon">🚚</span>
         <span>Mobility – Department Change</span>
       </div>
-      <dl class="dl-grid">
+      <dl class="dl-grid dl-grid-full">
         <div>
           <dt>Open to change dept?</dt>
           <dd id="mob-change">—</dd>
         </div>
-      </dl>
+      </dl> 
     </div>
   </div>
 </div>
