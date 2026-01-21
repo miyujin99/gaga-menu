@@ -3182,11 +3182,8 @@ if (wrap && txt) {
     image: { type: "jpeg", quality: 0.92 },
     html2canvas: { scale: 2, useCORS: true, scrollY: 0, logging: false },
     jsPDF: { unit: "mm", format: "a4", orientation: "portrait", compress: true },
-
-    // ✅ NEW: tránh cắt ngang chữ giữa trang
-    pagebreak: {
-  mode: ["css"]
-}
+ pagebreak: { mode: ["css"] }
+  };
 
 
   return html2pdf()
