@@ -1857,172 +1857,174 @@ Your selection is used to reflect your development direction and support your le
               </div>
             </div>
 
-            <!-- ROW 2 · DEVELOPMENT PREFERENCES (2 COLUMNS) -->
-            <div class="profile-row">
-              <!-- LEFT: ROLES -->
-              <div class="profile-col">
-                <div class="box">
-                  <div class="box-header">
-                    <span class="icon">🗂️</span>
-                    <span>Development Preferences – Roles</span>
-                  </div>
-                  <div class="box-subtitle">
-                    At least one preference should be in the current department.
-                  </div>
-                  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
-                    <div>
-                      <div class="pill-small pill-blue" style="margin-bottom:3px;">1st Preference</div>
-                      <div id="pref1">—</div>
-                    </div>
-                    <div>
-                      <div class="pill-small pill-blue" style="margin-bottom:3px;">2nd Preference</div>
-                      <div id="pref2">—</div>
-                      <div id="crossNotice" class="pill-small pill-yellow" style="margin-top:4px;display:none;">
-                        Cross-dept
-                      </div>
-                    </div>
-                  </div>
-				<!-- Cross-department Development Rationale (Only show if cross-dept) -->
-				<div id="pdfCrossJustWrap" style="display:none; margin-top:10px;">
-				
-				  <div style="font-size:12px;margin-bottom:8px;font-weight:700;color:#374151;">
-				    Cross-Department Development Rationale
-				  </div>
-				
-				  <div id="pdfCrossJustText"
-				       style="font-size:12px;
-				              border:1px solid #fdba74;
-				              border-radius:8px;
-				              padding:8px 10px;
-				              color:#111827;
-				              white-space:pre-wrap;">
-				    —
-				  </div>
-				</div>				
-                </div>
-              </div>
+            <!-- ROW 2A · Development Preferences – Roles (FULL WIDTH) -->
+<div class="profile-row">
+  <div class="profile-col-full">
+    <div class="box">
+      <div class="box-header">
+        <span class="icon">🗂️</span>
+        <span>Development Preferences – Roles</span>
+      </div>
+      <div class="box-subtitle">
+        At least one preference should be in the current department.
+      </div>
 
-              <!-- RIGHT: REASONS -->
-              <div class="profile-col">
-                <div class="box">
-                  <div class="box-header">
-                    <span class="icon">🗂️</span>
-                    <span>Development Preferences – Reasons</span>
-                  </div>
-                  <div class="box-subtitle">
-                    Brief summary of why the candidate chose these role(s).
-                  </div>
-                  <div style="font-size:12px;margin-bottom:6px;">
-                    <strong>Reason (1st Preference):</strong>
-                    <div id="rs1">—</div>
-                  </div>
-                  <div style="font-size:12px;">
-                    <strong>Reason (2nd Preference):</strong>
-                    <div id="rs2">—</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- ROW 3 · LEADERSHIP & CAREER ASPIRATION -->
-            <div class="profile-row">
-		<!-- LEFT: LEADERSHIP -->
-		<div class="profile-col">
-		  <div class="box">
-<div class="box-header">
-  <span class="icon">🧭</span>
-  <span>Role-Specific – Leadership</span>
-</div>
-
-<!-- A) Leadership style -->
-<div style="font-size:12px;margin-bottom:8px;">
-  <strong>Future Leadership Style:</strong>
-  <div style="font-size:11px;color:#6b7280;margin:2px 0 4px;">
-    How the candidate would lead, motivate, and support the team in the target role.
-  </div>
-  <div id="profile-leadershipStyle">—</div>
-</div>
-
-
-<!-- B) SBI label -->
-<div style="font-size:12px;margin-top:12px;">
-  <strong>Candidate’s Example of Influencing or Motivating Others (SBI Format):</strong>
-</div>
-
-<dl class="profile-sbi">
-  <div>
-    <dt>Situation (S)</dt>
-    <dd id="profile-sbiS">—</dd>
-  </div>
-  <div>
-    <dt>Behavior (B)</dt>
-    <dd id="profile-sbiB">—</dd>
-  </div>
-  <div>
-    <dt>Impact (I)</dt>
-    <dd id="profile-sbiI">—</dd>
-  </div>
-</dl>
-
-
-		  </div>
-		</div>
-
-
-              <!-- RIGHT: CAREER ASPIRATION & MOTIVATION -->
-              <div class="profile-col">
-                <div class="box">
-                  <div class="box-header">
-                    <span class="icon">⚡</span>
-                    <span>Career Aspiration & Motivation</span>
-                  </div>
-                  <div class="box-subtitle">
-                    Short- to mid-term direction and why the roles matter.
-                  </div>
-                  <div style="font-size:12px;margin-bottom:4px;">
-                    <strong>Career goals (1–3 years):</strong>
-                    <div id="asp-short">—</div>
-                  </div>
-                  <div style="font-size:12px;">
-                    <strong>Motivation for these roles:</strong>
-                    <div id="asp-mid">—</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- ROW 4 · SELF-LEADERSHIP & MOBILITY -->
-            <div class="profile-row">
-              <!-- LEFT: SELF-LEADERSHIP -->
-              <div class="profile-col">
-                <div class="box">
-                  <div class="box-header">
-                    <span class="icon">🌱</span>
-                    <span>Optional – Self-leadership</span>
-                  </div>
-                  <div id="profile-selfLeadership" style="font-size:12px;">
-                    —</div>
-                </div>
-              </div>
-
-              <!-- RIGHT: Mobility – Department Change -->
-              <div class="profile-col">
-                <div class="box">
-                  <div class="box-header">
-                    <span class="icon">🚚</span>
-                    <span>Mobility – Department Change</span>
-                  </div>
-                  <dl class="dl-grid">
-                    <div>
-                      <dt>Open to change dept?</dt>
-                      <dd id="mob-change">—</dd>
-                    </div>
-                  </dl>
-                </div>
-              </div>
-            </div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
+        <div>
+          <div class="pill-small pill-blue" style="margin-bottom:3px;">1st Preference</div>
+          <div id="pref1">—</div>
+        </div>
+        <div>
+          <div class="pill-small pill-blue" style="margin-bottom:3px;">2nd Preference</div>
+          <div id="pref2">—</div>
+          <div id="crossNotice" class="pill-small pill-yellow" style="margin-top:4px;display:none;">
+            Cross-dept
           </div>
         </div>
+      </div>
+
+      <!-- Cross-department Development Rationale (Only show if cross-dept) -->
+      <div id="pdfCrossJustWrap" style="display:none; margin-top:10px;">
+        <div style="font-size:12px;margin-bottom:8px;font-weight:700;color:#374151;">
+          Cross-Department Development Rationale
+        </div>
+
+        <div id="pdfCrossJustText"
+             style="font-size:12px;
+                    border:1px solid #fdba74;
+                    border-radius:8px;
+                    padding:8px 10px;
+                    color:#111827;
+                    white-space:pre-wrap;">
+          —
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 2B · Development Preferences – Reasons (FULL WIDTH) -->
+<div class="profile-row">
+  <div class="profile-col-full">
+    <div class="box">
+      <div class="box-header">
+        <span class="icon">🗂️</span>
+        <span>Development Preferences – Reasons</span>
+      </div>
+      <div class="box-subtitle">
+        Brief summary of why the candidate chose these role(s).
+      </div>
+
+      <div style="font-size:12px;margin-bottom:10px;">
+        <strong>Reason (1st Preference):</strong>
+        <div id="rs1">—</div>
+      </div>
+
+      <div style="font-size:12px;">
+        <strong>Reason (2nd Preference):</strong>
+        <div id="rs2">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 3A · Role-Specific – Leadership (FULL WIDTH) -->
+<div class="profile-row">
+  <div class="profile-col-full">
+    <div class="box">
+      <div class="box-header">
+        <span class="icon">🧭</span>
+        <span>Role-Specific – Leadership</span>
+      </div>
+
+      <!-- A) Leadership style -->
+      <div style="font-size:12px;margin-bottom:10px;">
+        <strong>Future Leadership Style:</strong>
+        <div style="font-size:11px;color:#6b7280;margin:2px 0 4px;">
+          How the candidate would lead, motivate, and support the team in the target role.
+        </div>
+        <div id="profile-leadershipStyle">—</div>
+      </div>
+
+      <!-- B) SBI -->
+      <div style="font-size:12px;margin-top:10px;">
+        <strong>Candidate’s Example of Influencing or Motivating Others (SBI Format):</strong>
+      </div>
+
+      <dl class="profile-sbi">
+        <div>
+          <dt>Situation (S)</dt>
+          <dd id="profile-sbiS">—</dd>
+        </div>
+        <div>
+          <dt>Behavior (B)</dt>
+          <dd id="profile-sbiB">—</dd>
+        </div>
+        <div>
+          <dt>Impact (I)</dt>
+          <dd id="profile-sbiI">—</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 3B · Career Aspiration & Motivation (FULL WIDTH) -->
+<div class="profile-row">
+  <div class="profile-col-full">
+    <div class="box">
+      <div class="box-header">
+        <span class="icon">⚡</span>
+        <span>Career Aspiration & Motivation</span>
+      </div>
+      <div class="box-subtitle">
+        Short- to mid-term direction and why the roles matter.
+      </div>
+
+      <div style="font-size:12px;margin-bottom:10px;">
+        <strong>Career goals (1–3 years):</strong>
+        <div id="asp-short">—</div>
+      </div>
+
+      <div style="font-size:12px;">
+        <strong>Motivation for these roles:</strong>
+        <div id="asp-mid">—</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 4A · Mobility – Department Change (FULL WIDTH) -->
+<div class="profile-row">
+  <div class="profile-col-full">
+    <div class="box">
+      <div class="box-header">
+        <span class="icon">🚚</span>
+        <span>Mobility – Department Change</span>
+      </div>
+      <dl class="dl-grid">
+        <div>
+          <dt>Open to change dept?</dt>
+          <dd id="mob-change">—</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 4B · Optional – Self-leadership (FULL WIDTH) -->
+<div class="profile-row">
+  <div class="profile-col-full">
+    <div class="box">
+      <div class="box-header">
+        <span class="icon">🌱</span>
+        <span>Optional – Self-leadership</span>
+      </div>
+      <div id="profile-selfLeadership" style="font-size:12px;">—</div>
+    </div>
+  </div>
+</div>
+
 
         <!-- Buttons under modal -->
 <!-- Buttons under modal -->
