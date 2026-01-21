@@ -1213,6 +1213,11 @@
   font-weight: 700;
   color: #1f2937;
 }
+.preserve-ws{
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 
   </style>
 </head>
@@ -1876,7 +1881,7 @@ Your selection is used to reflect your development direction and support your le
         At least one preference should be in the current department.
       </div>
 
-<div style="display:grid;grid-template-columns:1fr;gap:8px;">
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;">
         <div>
           <div class="pill-small pill-blue" style="margin-bottom:3px;">1st Preference</div>
           <div id="pref1">—</div>
@@ -1924,12 +1929,12 @@ Your selection is used to reflect your development direction and support your le
 
       <div style="font-size:12px;margin-bottom:10px;">
         <strong>Reason (1st Preference):</strong>
-        <div id="rs1">—</div>
+        <div id="rs1" class="preserve-ws">—</div>
       </div>
 
       <div style="font-size:12px;">
         <strong>Reason (2nd Preference):</strong>
-        <div id="rs2">—</div>
+        <div id="rs2" class="preserve-ws">—</div>
       </div>
     </div>
   </div>
@@ -1950,7 +1955,8 @@ Your selection is used to reflect your development direction and support your le
         <div style="font-size:11px;color:#6b7280;margin:2px 0 4px;">
           How the candidate would lead, motivate, and support the team in the target role.
         </div>
-        <div id="profile-leadershipStyle">—</div>
+        <div id="profile-leadershipStyle" class="preserve-ws">—</div>
+
       </div>
 
       <!-- B) SBI -->
@@ -1961,15 +1967,15 @@ Your selection is used to reflect your development direction and support your le
       <dl class="profile-sbi">
         <div>
           <dt>Situation (S)</dt>
-          <dd id="profile-sbiS">—</dd>
+          <dd id="profile-sbiS" class="preserve-ws">—</dd>
         </div>
         <div>
           <dt>Behavior (B)</dt>
-          <dd id="profile-sbiB">—</dd>
+          <dd id="profile-sbiB" class="preserve-ws">—</dd>
         </div>
         <div>
           <dt>Impact (I)</dt>
-          <dd id="profile-sbiI">—</dd>
+          <dd id="profile-sbiI" class="preserve-ws">—</dd>
         </div>
       </dl>
     </div>
@@ -1990,12 +1996,12 @@ Your selection is used to reflect your development direction and support your le
 
       <div style="font-size:12px;margin-bottom:10px;">
         <strong>Career goals (1–3 years):</strong>
-        <div id="asp-short">—</div>
+        <div id="asp-short" class="preserve-ws">—</div>
       </div>
 
       <div style="font-size:12px;">
         <strong>Motivation for these roles:</strong>
-        <div id="asp-mid">—</div>
+        <div id="asp-mid" class="preserve-ws">—</div>
       </div>
     </div>
   </div>
@@ -2020,17 +2026,18 @@ Your selection is used to reflect your development direction and support your le
 </div>
 
 <!-- ROW 4B · Optional – Self-leadership (FULL WIDTH) -->
-<div class="profile-row">
+<div class="profile-row" id="rowSelfLeadership">
   <div class="profile-col-full">
     <div class="box">
       <div class="box-header">
         <span class="icon">🌱</span>
         <span>Optional – Self-leadership</span>
       </div>
-      <div id="profile-selfLeadership" style="font-size:12px;">—</div>
+      <div id="profile-selfLeadership" class="preserve-ws">—</div>
     </div>
   </div>
 </div>
+
 
 
         <!-- Buttons under modal -->
@@ -3084,9 +3091,19 @@ if (wrap && txt) {
       $("profile-sbiI").innerText =
         payload.roleSpecific.sbiImpact || "—";
 
-      // Optional self-leadership
-      $("profile-selfLeadership").innerText =
-        payload.careerAndMobility.selfLeadershipExample || "—";
+// Optional self-leadership (show only if filled)
+const selfText = payload.careerAndMobility.selfLeadershipExample || "";
+const rowSelf = $("rowSelfLeadership");
+const selfBox = $("profile-selfLeadership");
+
+if (selfText.trim()) {
+  selfBox.innerText = selfText.trim();
+  rowSelf.style.display = "";      // ✅ trả về mặc định theo CSS
+} else {
+  rowSelf.style.display = "none";  // ✅ ẩn hẳn
+}
+
+
     }
 
     // ===============================
