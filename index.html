@@ -2124,6 +2124,12 @@ Your selection is used to reflect your development direction and support your le
       function $(id) {
       return document.getElementById(id);
     }
+function getRawText(id) {
+  const el = document.getElementById(id);
+  if (!el) return "";
+  // giữ nguyên xuống dòng + khoảng trắng phía sau
+  return (el.value || "").replace(/\r\n/g, "\n");
+}
 
     function escapeHtml(str) {
       if (!str) return "";
@@ -2954,7 +2960,7 @@ if (!changeDept) {
                 roleTitle: pref1Role.title,
                 department: pref1Role.dept,
                 type: pref1Role.type,
-                reason: $("pref1Reason").value.trim()
+                reason: getRawText("pref1Reason")
               }
             : null,
           preference2: pref2Role
@@ -2963,25 +2969,23 @@ if (!changeDept) {
                 roleTitle: pref2Role.title,
                 department: pref2Role.dept,
                 type: pref2Role.type,
-                reason: $("pref2Reason").value.trim()
+                reason: getRawText("pref2Reason")
               }
             : null,
-          crossDepartmentJustification:
-            $("crossJustification").value.trim() || null
+          crossDepartmentJustification: getRawText("crossJustification") || null
         },
         roleSpecific: {
-          leadershipStyle: $("leadershipStyle").value.trim(),
-          sbiSituation: $("sbiSituation").value.trim(),
-          sbiBehavior: $("sbiBehavior").value.trim(),
-          sbiImpact: $("sbiImpact").value.trim()
+          leadershipStyle: getRawText("leadershipStyle"),
+		  sbiSituation: getRawText("sbiSituation"),
+		  sbiBehavior: getRawText("sbiBehavior"),
+		  sbiImpact: getRawText("sbiImpact")
         },
-        careerAndMobility: {
-          careerGoals: $("careerGoals").value.trim(),
-          motivation: $("motivation").value.trim(),
-          willingChangeDept: getRadioValue("changeDept"),
-          selfLeadershipExample:
-            $("selfLeadership").value.trim() || null
-        },
+careerAndMobility: {
+  careerGoals: getRawText("careerGoals"),
+  motivation: getRawText("motivation"),
+  willingChangeDept: getRadioValue("changeDept"), // ✅ ADD THIS
+  selfLeadershipExample: getRawText("selfLeadership") || null
+},
 
         consents: {
           developmentVsPromotion: $("consentDevelopment").checked,
@@ -3081,13 +3085,14 @@ const txt = $("pdfCrossJustText");
 if (wrap && txt) {
   if (anyCross && cj.trim()) {
     wrap.style.display = "block";
-    // ✅ preserve spacing/newlines
-    txt.innerHTML = preserveTextToHtml(cj.trim());
+    // ✅ render dùng raw cj để giữ xuống dòng/khoảng trắng cuối
+    txt.innerHTML = preserveTextToHtml(cj);
   } else {
     wrap.style.display = "none";
     txt.innerHTML = "—";
   }
 }
+
 
 // Reasons (textarea -> preserve)
 setPreservedHtml("rs1", (p1 && p1.reason) || "—");
@@ -3114,11 +3119,12 @@ const rowSelf = $("rowSelfLeadership");
 const selfBox = $("profile-selfLeadership");
 
 if (selfText.trim()) {
-  selfBox.innerHTML = preserveTextToHtml(selfText.trim());
+  selfBox.innerHTML = preserveTextToHtml(selfText);
   rowSelf.style.display = "";
 } else {
   rowSelf.style.display = "none";
 }
+
 
 
     }
